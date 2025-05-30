@@ -1,0 +1,13 @@
+name: Arduino Library
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  Arduino-Checks:
+    uses: sensirion/.github/.github/workflows/upt.arduino.check.yml@main
+    with:
+      expect-arduino-examples: true
+      lint-lib-manager-check: submit

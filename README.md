@@ -1,4 +1,5 @@
 # Sensirion UPT Display
+[![PlatformIO Registry](https://badges.registry.platformio.org/packages/sensirion/library/Sensirion%20UPT%20Display.svg)](https://registry.platformio.org/libraries/sensirion/Sensirion%20UPT%20Display)  [![arduino-library-badge](https://www.ardu-badge.com/badge/Sensirion%20UPT%20Display.svg?)](https://docs.arduino.cc/libraries/sensirion-upt-display)  
 This library is meant to simplify the display of UPT measurements on supported boards (see below).
 
 This library is part of *Sensirion Unified Prototyping Toolkit (UPT)*. A set of libraries aiming to simplify the creation of environment monitoring devices.

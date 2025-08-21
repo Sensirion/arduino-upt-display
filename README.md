@@ -50,8 +50,12 @@ See the dedicated example.
 The UPT-Display library depends on the great work done by the [*TFT_eSPI* library](https://github.com/Bodmer/TFT_eSPI). 
 
 After installation of the dependency, the right screen configuration needs to be selected using the `User_Setup_Select.h`.  
-I.e. for Lilygo T-Display S3 (our target board), the line `#include <User_Setups/Setup206_LilyGo_T_Display_S3.h>` needs to be uncommented.
+I.e. for Lilygo T-Display S3 (our target board), the line `#include <User_Setups/Setup206_LilyGo_T_Display_S3.h>` needs to be uncommented and the line `#include <User_Setup.h>` 
+needs to be commented.
 Please refer to the documentation of the *TFT_eSPI* library for the most up-to-date installation instructions.
+
+[!Note]: 
+When using the examples with platform.io, this screen selection has to be done for each example!
 
 ## Fonts
 The font used is `LiberationSans` you can generate and define your own font header files using instructions from *TFT_eSPI*.

@@ -12,8 +12,7 @@
 #include "images/tux_image_150_px.h"
 
 void setup() {
-    UptDisplay::init(portrait);
-
+    UptDisplay::init(landscape);
     std::vector<std::pair<std::string, std::string>> infos = {
         {"Version", "1.0.0"}, {"Temp. unit", "celsius"}, {"WiFi", "disabled"}};
 

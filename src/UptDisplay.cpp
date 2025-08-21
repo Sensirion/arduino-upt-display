@@ -9,6 +9,8 @@
 #define MEASUREMENT_VALUE_UNIT_SPACING 5
 #define TILE_TITLE_OFFSET 20
 
+using namespace sensirion::upt;
+
 // Dev grid overlay can be enabled by compiling with the flag
 // UPTDISPLAY_SHOW_GRID
 void drawDevOverlay();
@@ -17,15 +19,15 @@ void drawBackground();
 void drawVScreenTopTitle(const SensorDisplayValues& sensorData);
 void drawVScreenLegend(const SensorDisplayValues& sensorData);
 void drawHScreenLegend(const SensorDisplayValues& sensorData);
-void drawTile(SensorDisplayTile tile, const Measurement& measurement);
-void drawTileValue(SensorDisplayTile tile, const Measurement& measurement);
+void drawTile(SensorDisplayTile tile, const core::Measurement& measurement);
+void drawTileValue(SensorDisplayTile tile, const core::Measurement& measurement);
 void eraseTileValue(SensorDisplayTile tile);
 
 /* Buffer a signal as a string */
-void bufferValueAsString(char* buf, const Measurement& measurement);
+void bufferValueAsString(char* buf, const core::Measurement& measurement);
 
 /* Get color with which a signal should be displayed */
-uint32_t colorOf(const Measurement& measurement);
+uint32_t colorOf(const core::Measurement& measurement);
 
 TFT_eSPI UptDisplay::tft;
 auto spr = TFT_eSprite(&UptDisplay::tft);
@@ -288,7 +290,7 @@ void drawHScreenLegend(const SensorDisplayValues& sensorData) {
     spr.unloadFont();
 }
 
-void drawTile(SensorDisplayTile tile, const Measurement& measurement) {
+void drawTile(SensorDisplayTile tile, const core::Measurement& measurement) {
     // Draw Tile
     const auto rectX = static_cast<int16_t>(tile.tlx);
     const auto rectY = static_cast<int16_t>(tile.tly);
@@ -358,7 +360,7 @@ void eraseTileValue(SensorDisplayTile tile) {
     spr.unloadFont();
 }
 
-void drawTileValue(SensorDisplayTile tile, const Measurement& measurement) {
+void drawTileValue(SensorDisplayTile tile, const core::Measurement& measurement) {
     char val[32];  // Numerical value of measurement
     bufferValueAsString(val, measurement);
     uint xShiftValue = 0;
@@ -443,13 +445,13 @@ void drawTileValue(SensorDisplayTile tile, const Measurement& measurement) {
     spr.unloadFont();
 }
 
-void bufferValueAsString(char* buf, const Measurement& measurement) {
-    SignalType st = measurement.signalType;
-    if (st == SignalType::TEMPERATURE_DEGREES_CELSIUS ||
-        st == SignalType::TEMPERATURE_DEGREES_FARENHEIT ||
-        st == SignalType::RELATIVE_HUMIDITY_PERCENTAGE ||
-        st == SignalType::VELOCITY_METERS_PER_SECOND ||
-        st == SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE) {
+void bufferValueAsString(char* buf, const core::Measurement& measurement) {
+    core::SignalType st = measurement.signalType;
+    if (st == core::SignalType::TEMPERATURE_DEGREES_CELSIUS ||
+        st == core::SignalType::TEMPERATURE_DEGREES_FARENHEIT ||
+        st == core::SignalType::RELATIVE_HUMIDITY_PERCENTAGE ||
+        st == core::SignalType::VELOCITY_METERS_PER_SECOND ||
+        st == core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE) {
         sprintf(buf, "%.1f", measurement.dataPoint.value);
     } else if (measurement.dataPoint.value < 10.0) {
         // A workaround because single char is not being displayed. can be
@@ -460,9 +462,9 @@ void bufferValueAsString(char* buf, const Measurement& measurement) {
     }
 }
 
-uint32_t colorOf(const Measurement& measurement) {
+uint32_t colorOf(const core::Measurement& measurement) {
     switch (measurement.signalType) {
-        case SignalType::TEMPERATURE_DEGREES_CELSIUS: {
+        case core::SignalType::TEMPERATURE_DEGREES_CELSIUS: {
             if (measurement.dataPoint.value < 10) {
                 return UPT_DISPLAY_BLUE_COLOR;
             }
@@ -471,7 +473,7 @@ uint32_t colorOf(const Measurement& measurement) {
             }
             return UPT_DISPLAY_GREEN_COLOR;
         }
-        case SignalType::TEMPERATURE_DEGREES_FARENHEIT: {
+        case core::SignalType::TEMPERATURE_DEGREES_FARENHEIT: {
             if (measurement.dataPoint.value < 50) {
                 return UPT_DISPLAY_BLUE_COLOR;
             }
@@ -480,9 +482,9 @@ uint32_t colorOf(const Measurement& measurement) {
             }
             return UPT_DISPLAY_GREEN_COLOR;
         }
-        case SignalType::RELATIVE_HUMIDITY_PERCENTAGE:
+        case core::SignalType::RELATIVE_HUMIDITY_PERCENTAGE:
             return UPT_DISPLAY_BLUE_COLOR;
-        case SignalType::CO2_PARTS_PER_MILLION: {
+        case core::SignalType::CO2_PARTS_PER_MILLION: {
             if (measurement.dataPoint.value < 650) {
                 return UPT_DISPLAY_GREEN_COLOR;
             }
@@ -491,18 +493,18 @@ uint32_t colorOf(const Measurement& measurement) {
             }
             return UPT_DISPLAY_RED_COLOR;
         }
-        case SignalType::HCHO_PARTS_PER_BILLION:  // NOLINT(*-branch-clone)
+        case core::SignalType::HCHO_PARTS_PER_BILLION:  // NOLINT(*-branch-clone)
             return UPT_DISPLAY_RED_COLOR;
-        case SignalType::PM1P0_MICRO_GRAMM_PER_CUBIC_METER:
-        case SignalType::PM2P5_MICRO_GRAMM_PER_CUBIC_METER:
-        case SignalType::PM4P0_MICRO_GRAMM_PER_CUBIC_METER:
-        case SignalType::PM10P0_MICRO_GRAMM_PER_CUBIC_METER:
+        case core::SignalType::PM1P0_MICRO_GRAMM_PER_CUBIC_METER:
+        case core::SignalType::PM2P5_MICRO_GRAMM_PER_CUBIC_METER:
+        case core::SignalType::PM4P0_MICRO_GRAMM_PER_CUBIC_METER:
+        case core::SignalType::PM10P0_MICRO_GRAMM_PER_CUBIC_METER:
             return UPT_DISPLAY_RED_COLOR;
-        case SignalType::VELOCITY_METERS_PER_SECOND:
+        case core::SignalType::VELOCITY_METERS_PER_SECOND:
             return UPT_DISPLAY_GRAY_COLOR;
-        case SignalType::RAW_VOC_INDEX:
-        case SignalType::RAW_NOX_INDEX:
-        case SignalType::VOC_INDEX: {
+        case core::SignalType::RAW_VOC_INDEX:
+        case core::SignalType::RAW_NOX_INDEX:
+        case core::SignalType::VOC_INDEX: {
             if (measurement.dataPoint.value < 85) {
                 return UPT_DISPLAY_BLUE_COLOR;
             }
@@ -514,7 +516,7 @@ uint32_t colorOf(const Measurement& measurement) {
             }
             return UPT_DISPLAY_RED_COLOR;
         }
-        case SignalType::NOX_INDEX: {
+        case core::SignalType::NOX_INDEX: {
             if (measurement.dataPoint.value <= 1) {
                 return UPT_DISPLAY_GREEN_COLOR;
             }
@@ -523,7 +525,7 @@ uint32_t colorOf(const Measurement& measurement) {
             }
             return UPT_DISPLAY_RED_COLOR;
         }
-        case SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE:
+        case core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE:
             return UPT_DISPLAY_GREEN_COLOR;
         default:
             return 0;

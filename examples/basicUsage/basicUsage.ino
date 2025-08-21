@@ -2,6 +2,8 @@
 
 #include "Sensirion_upt_display.h"
 
+using namespace sensirion::upt::core;
+
 SensorDisplayValues sdv;
 
 /**

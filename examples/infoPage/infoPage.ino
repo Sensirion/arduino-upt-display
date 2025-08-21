@@ -7,7 +7,7 @@
  * It allows to display configuration information
  */
 
-#include "Sensirion_upt_display.h"
+#include "Sensirion_UPT_Display.h"
 // Image is expected to be 150px by 150px
 #include "images/tux_image_150_px.h"
 

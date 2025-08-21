@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+using namespace sensirion::upt;
+
 enum Orientation { portrait = 0, landscape = 1 };
 
 /**
@@ -17,7 +19,7 @@ struct SensorDisplayValues {
     char timeInfoStr[32];
     uint numTrackedSensors;
     uint sensorRank;
-    std::vector<Measurement> measurements;
+    std::vector<core::Measurement> measurements;
 };
 
 namespace UptDisplay {

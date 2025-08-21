@@ -1,6 +1,8 @@
 // Example script showing mocked sensor data on the screen.
 
-#include "Sensirion_upt_display.h"
+#include "Sensirion_UPT_Display.h"
+
+using namespace sensirion::upt::core;
 
 SensorDisplayValues sdv;
 

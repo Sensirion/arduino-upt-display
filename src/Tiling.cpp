@@ -2,7 +2,7 @@
 
 namespace sensirion::upt::display {
 
-static const char* TAG = "VIZ";
+constexpr auto TAG = "VIZ";
 
 uint8_t getMaxNTiles(uint screen_width_px, uint screen_height_px) {
     if (screen_height_px <= screen_width_px) {

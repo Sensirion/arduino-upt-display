@@ -12,10 +12,8 @@ display::SensorDisplayValues sdv;
  * @param nSig: The number of signals to return
  */
 void randomNSignalsSensor(display::SensorDisplayValues& sdv, uint8_t nSig) {
-    char sensorname[16];
-    sprintf(sensorname, "%s%d", "Sensor ", nSig);
-    strncpy(sdv.sensorName, sensorname, 16);
-    strncpy(sdv.timeInfoStr, "09:41:20", 21);
+    sdv.sensorName = "Sensor " + std::to_string(nSig);
+    sdv.timeInfoStr = "09:41:20";
     sdv.numTrackedSensors = random(1, 10);
     sdv.sensorRank = random(1, sdv.numTrackedSensors);
     sdv.measurements.clear();

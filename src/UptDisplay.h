@@ -15,8 +15,8 @@ enum Orientation { portrait = 0, landscape = 1 };
  * @brief A container for the measurements and sensor information
  */
 struct SensorDisplayValues {
-    char sensorName[32];
-    char timeInfoStr[32];
+    std::string sensorName;
+    std::string timeInfoStr;
     uint numTrackedSensors;
     uint sensorRank;
     std::vector<core::Measurement> measurements;

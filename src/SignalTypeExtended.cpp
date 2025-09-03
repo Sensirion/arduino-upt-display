@@ -2,7 +2,7 @@
 
 namespace sensirion::upt::display {
 
-const char* longSignalDescription(const core::SignalType signalType) {
+std::string longSignalDescription(const core::SignalType signalType) {
     switch (signalType) {
         case core::SignalType::TEMPERATURE_DEGREES_CELSIUS:
         case core::SignalType::TEMPERATURE_DEGREES_FARENHEIT:
@@ -38,7 +38,7 @@ const char* longSignalDescription(const core::SignalType signalType) {
     }
 }
 
-const char* medSignalDescription(const core::SignalType signalType) {
+std::string medSignalDescription(const core::SignalType signalType) {
     switch (signalType) {
         case core::SignalType::TEMPERATURE_DEGREES_CELSIUS:
         case core::SignalType::TEMPERATURE_DEGREES_FARENHEIT:
@@ -74,7 +74,7 @@ const char* medSignalDescription(const core::SignalType signalType) {
     }
 }
 
-const char* shortSignalDescription(const core::SignalType signalType) {
+std::string shortSignalDescription(const core::SignalType signalType) {
     switch (signalType) {
         case core::SignalType::TEMPERATURE_DEGREES_CELSIUS:
         case core::SignalType::TEMPERATURE_DEGREES_FARENHEIT:
@@ -110,7 +110,7 @@ const char* shortSignalDescription(const core::SignalType signalType) {
     }
 }
 
-const char* signalIcon(const core::SignalType signalType) {
+std::string signalIcon(const core::SignalType signalType) {
     switch (signalType) {
         case core::SignalType::TEMPERATURE_DEGREES_CELSIUS:
         case core::SignalType::TEMPERATURE_DEGREES_FARENHEIT:
@@ -141,44 +141,34 @@ const char* signalIcon(const core::SignalType signalType) {
     }
 }
 
-void getGraphicSignalUnit(char* buf, const core::SignalType& signalType) {
+std::string getGraphicSignalUnit(const core::SignalType& signalType) {
     switch (signalType) {
         case core::SignalType::TEMPERATURE_DEGREES_CELSIUS:
-            strncpy(buf, "°C", 4);
-            break;
+            return "°C";
         case core::SignalType::TEMPERATURE_DEGREES_FARENHEIT:
-            strncpy(buf, "°F", 4);
-            break;
+            return "°F";
         case core::SignalType::RELATIVE_HUMIDITY_PERCENTAGE:
-            strncpy(buf, "% ", 3);
-            break;
+            return "% ";
         case core::SignalType::CO2_PARTS_PER_MILLION:
-            strncpy(buf, "ppm", 4);
-            break;
+            return "ppm";
         case core::SignalType::HCHO_PARTS_PER_BILLION:
-            strncpy(buf, "ppb", 4);
-            break;
+            return "ppb";
         case core::SignalType::PM1P0_MICRO_GRAMM_PER_CUBIC_METER:
         case core::SignalType::PM2P5_MICRO_GRAMM_PER_CUBIC_METER:
         case core::SignalType::PM4P0_MICRO_GRAMM_PER_CUBIC_METER:
         case core::SignalType::PM10P0_MICRO_GRAMM_PER_CUBIC_METER:
-            strncpy(buf, "µg/m³", 8);
-            break;
+            return "µg/m³";
         case core::SignalType::VELOCITY_METERS_PER_SECOND:
-            strncpy(buf, "m/s", 6);
-            break;
+            return "m/s";
         case core::SignalType::RAW_VOC_INDEX:
         case core::SignalType::RAW_NOX_INDEX:
         case core::SignalType::VOC_INDEX:
         case core::SignalType::NOX_INDEX:
-            strncpy(buf, "", 1);
-            break;
+            return "";
         case core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE:
-            strncpy(buf, "% ", 3);
-            break;
+            return "% ";
         default:
-            strncpy(buf, "error", 6);
-            break;
+            return "error";
     }
 }
 

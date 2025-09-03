@@ -24,19 +24,19 @@ struct SensorDisplayTile {
     uint bry;
     TileType type;
 
-    uint getCx() {
+    uint getCx() const {
         return (brx + tlx) / 2;
     }
 
-    uint getCy() {
+    uint getCy() const {
         return (bry + tly) / 2;
     }
 
-    uint getHeight() {
+    uint getHeight() const {
         return bry - tly;
     }
 
-    uint getWidth() {
+    uint getWidth() const {
         return brx - tlx;
     }
 };

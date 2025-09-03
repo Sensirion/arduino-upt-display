@@ -3,6 +3,7 @@
 #include <SensirionColors.h>
 #include <Tiling.h>
 #include <fonts/DefaultFont.h>
+#include <sstream>
 
 namespace sensirion::upt::display {
 
@@ -19,13 +20,14 @@ void drawBackground();
 void drawVScreenTopTitle(const SensorDisplayValues& sensorData);
 void drawVScreenLegend(const SensorDisplayValues& sensorData);
 void drawHScreenLegend(const SensorDisplayValues& sensorData);
-void drawTile(SensorDisplayTile tile, const core::Measurement& measurement);
-void drawTileValue(SensorDisplayTile tile,
+void drawTile(const SensorDisplayTile& tile,
+              const core::Measurement& measurement);
+void drawTileValue(const SensorDisplayTile& tile,
                    const core::Measurement& measurement);
-void eraseTileValue(SensorDisplayTile tile);
+void eraseTileValue(const SensorDisplayTile& tile);
 
 /* Buffer a signal as a string */
-void bufferValueAsString(char* buf, const core::Measurement& measurement);
+std::string bufferValueAsString(const core::Measurement& measurement);
 
 /* Get color with which a signal should be displayed */
 uint32_t colorOf(const core::Measurement& measurement);
@@ -229,9 +231,9 @@ void drawVScreenTopTitle(const SensorDisplayValues& data) {
     spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
                      UPT_DISPLAY_BACKGROUND_COLOR);
     const auto cursorX = static_cast<int16_t>(
-        tft.width() / 2 - spr.textWidth(data.sensorName) / 2);
+        tft.width() / 2 - spr.textWidth(data.sensorName.c_str()) / 2);
     tft.setCursor(cursorX, TILE_VERTICAL_TOP_OFFSET - spr.fontHeight());
-    spr.printToSprite(data.sensorName);
+    spr.printToSprite(data.sensorName.c_str());
     spr.unloadFont();
 }
 
@@ -247,7 +249,7 @@ void drawVScreenLegend(const SensorDisplayValues& sensorData) {
 
     // Print measurement time
     tft.setCursor(cursorX, cursorY);
-    spr.printToSprite(sensorData.timeInfoStr);
+    spr.printToSprite(sensorData.timeInfoStr.c_str());
 
     // Print sensor rank
     char rank[8];
@@ -285,11 +287,12 @@ void drawHScreenLegend(const SensorDisplayValues& sensorData) {
                                    SCREEN_FRAME_MARGIN);
     tft.setCursor(cursorX, cursorY);
 
-    spr.printToSprite(sensorData.timeInfoStr);
+    spr.printToSprite(sensorData.timeInfoStr.c_str());
     spr.unloadFont();
 }
 
-void drawTile(SensorDisplayTile tile, const core::Measurement& measurement) {
+void drawTile(const SensorDisplayTile& tile,
+              const core::Measurement& measurement) {
     // Draw Tile
     const auto rectX = static_cast<int16_t>(tile.tlx);
     const auto rectY = static_cast<int16_t>(tile.tly);
@@ -313,16 +316,19 @@ void drawTile(SensorDisplayTile tile, const core::Measurement& measurement) {
             } else {
                 spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
             }
-            spr.printToSprite(shortSignalDescription(measurement.signalType));
+            spr.printToSprite(
+                shortSignalDescription(measurement.signalType).c_str());
             break;
         case TileType::NARROW:
         case TileType::MEDIUM:
             spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
-            spr.printToSprite(medSignalDescription(measurement.signalType));
+            spr.printToSprite(
+                medSignalDescription(measurement.signalType).c_str());
             break;
         case TileType::LARGE:
             spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
-            spr.printToSprite(longSignalDescription(measurement.signalType));
+            spr.printToSprite(
+                longSignalDescription(measurement.signalType).c_str());
             break;
         default:
             tft.print("Error");
@@ -331,7 +337,7 @@ void drawTile(SensorDisplayTile tile, const core::Measurement& measurement) {
     spr.unloadFont();
 }
 
-void eraseTileValue(SensorDisplayTile tile) {
+void eraseTileValue(const SensorDisplayTile& tile) {
     switch (tile.type) {
         case TileType::SMALL:
         case TileType::NARROW:
@@ -357,10 +363,9 @@ void eraseTileValue(SensorDisplayTile tile) {
     spr.unloadFont();
 }
 
-void drawTileValue(SensorDisplayTile tile,
+void drawTileValue(const SensorDisplayTile& tile,
                    const core::Measurement& measurement) {
-    char val[32];  // Numerical value of measurement
-    bufferValueAsString(val, measurement);
+    auto val = bufferValueAsString(measurement);
     uint xShiftValue = 0;
     uint yShiftValue = 0;
 
@@ -383,7 +388,7 @@ void drawTileValue(SensorDisplayTile tile,
             break;
     }
 
-    int valWidth = spr.textWidth(val);
+    int valWidth = spr.textWidth(val.c_str());
     spr.setTextColor(colorOf(measurement), UPT_DISPLAY_TILE_PRIMARY_COLOR);
 
     // Offset height because of title
@@ -394,12 +399,11 @@ void drawTileValue(SensorDisplayTile tile,
                                               spr.fontHeight() + yShiftValue);
 
     tft.setCursor(cursorX, cursorY);
-    spr.printToSprite(val);
+    spr.printToSprite(val.c_str());
     const int16_t valFontHeight = spr.fontHeight();
     spr.unloadFont();
 
-    char unit[8];  // Unit of measurement
-    getGraphicSignalUnit(unit, measurement.signalType);
+    std::string unit = getGraphicSignalUnit(measurement.signalType);
 
     switch (tile.type) {
         case TileType::SMALL:
@@ -432,32 +436,35 @@ void drawTileValue(SensorDisplayTile tile,
     } else {
 
         unitXPos = static_cast<int16_t>(tile.brx - ROUNDED_CORNER_RADIUS -
-                                        spr.textWidth(unit));
+                                        spr.textWidth(unit.c_str()));
         unitYPos = static_cast<int16_t>(tile.bry - ROUNDED_CORNER_RADIUS -
                                         3 * spr.fontHeight() / 4);
     }
 
     tft.setCursor(unitXPos, unitYPos);
 
-    spr.printToSprite(unit);
+    spr.printToSprite(unit.c_str());
     spr.unloadFont();
 }
 
-void bufferValueAsString(char* buf, const core::Measurement& measurement) {
+std::string bufferValueAsString(const core::Measurement& measurement) {
+    std::stringstream ss{};
     core::SignalType st = measurement.signalType;
     if (st == core::SignalType::TEMPERATURE_DEGREES_CELSIUS ||
         st == core::SignalType::TEMPERATURE_DEGREES_FARENHEIT ||
         st == core::SignalType::RELATIVE_HUMIDITY_PERCENTAGE ||
         st == core::SignalType::VELOCITY_METERS_PER_SECOND ||
         st == core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE) {
-        sprintf(buf, "%.1f", measurement.dataPoint.value);
+        ss.precision(1);
     } else if (measurement.dataPoint.value < 10.0) {
         // A workaround because single char is not being displayed. can be
         // removed in the future
-        sprintf(buf, "%.0f.0", measurement.dataPoint.value);
+        ss.precision(0);
     } else {
-        sprintf(buf, "%.0f", measurement.dataPoint.value);
+        ss.precision(0);
     }
+    ss << measurement.dataPoint.value;
+    return ss.str();
 }
 
 uint32_t colorOf(const core::Measurement& measurement) {

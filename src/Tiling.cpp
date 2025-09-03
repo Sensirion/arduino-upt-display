@@ -1,5 +1,7 @@
 #include "Tiling.h"
 
+namespace sensirion::upt::display {
+
 static const char* TAG = "VIZ";
 
 uint8_t getMaxNTiles(uint screen_width_px, uint screen_height_px) {
@@ -482,3 +484,5 @@ SensorDisplayTile* _get6VTile(uint screen_width_px, uint screen_height_px) {
                 TileType::SMALL};
     return tiles;
 }
+
+}  // namespace sensirion::upt::display

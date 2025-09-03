@@ -3,7 +3,7 @@
 
 #include "Sensirion_UPT_Core.h"
 
-using namespace sensirion::upt;
+namespace sensirion::upt::display {
 
 /*
  *   Extension of SignalType definition from UPT Core
@@ -22,5 +22,7 @@ const char* signalIcon(core::SignalType signalType);
 
 // Adds the unit for the given signal type to the character buffer
 void getGraphicSignalUnit(char* buf, const core::SignalType& signalType);
+
+}  // namespace sensirion::upt::display
 
 #endif /* _UPT_DISPLAY_SIGNAL_TYPE_EXTENDED_H_ */

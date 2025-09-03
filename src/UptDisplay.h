@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-using namespace sensirion::upt;
+namespace sensirion::upt::display {
 
 enum Orientation { portrait = 0, landscape = 1 };
 
@@ -22,7 +22,6 @@ struct SensorDisplayValues {
     std::vector<core::Measurement> measurements;
 };
 
-namespace UptDisplay {
 /**
  * @brief initializes the library
  * @param orientation: defines the orientation of the screen
@@ -67,6 +66,7 @@ void showSensorData(const SensorDisplayValues& sensorData);
 void refreshSensorData(const SensorDisplayValues& sensorData);
 
 extern TFT_eSPI tft;
-}  // namespace UptDisplay
+
+}  // namespace sensirion::upt::display
 
 #endif /* UPT_DISPLAY_H */

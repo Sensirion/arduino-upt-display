@@ -1,6 +1,8 @@
 #ifndef _SENSIRION_COLORS_H_
 #define _SENSIRION_COLORS_H_
 
+namespace sensirion::upt::display {
+
 // Comment next line to use light theme
 #define UPT_DISPLAY_USE_DARK_THEME
 
@@ -36,5 +38,7 @@
 // clang-format on
 
 #endif /* UPT_DISPLAY_USE_DARK_THEME */
+
+}  // namespace sensirion::upt::display
 
 #endif /* _SENSIRION_COLORS_H_ */

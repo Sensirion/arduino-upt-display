@@ -1,5 +1,6 @@
 #include "SignalTypeExtended.h"
 
+namespace sensirion::upt::display {
 
 const char* longSignalDescription(const core::SignalType signalType) {
     switch (signalType) {
@@ -180,3 +181,5 @@ void getGraphicSignalUnit(char* buf, const core::SignalType& signalType) {
             break;
     }
 }
+
+}  // namespace sensirion::upt::display

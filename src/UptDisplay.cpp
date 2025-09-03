@@ -4,12 +4,12 @@
 #include <Tiling.h>
 #include <fonts/DefaultFont.h>
 
+namespace sensirion::upt::display {
+
 #define ROUNDED_CORNER_RADIUS 10
 #define SCREEN_FRAME_MARGIN 2
 #define MEASUREMENT_VALUE_UNIT_SPACING 5
 #define TILE_TITLE_OFFSET 20
-
-using namespace sensirion::upt;
 
 // Dev grid overlay can be enabled by compiling with the flag
 // UPTDISPLAY_SHOW_GRID
@@ -20,7 +20,8 @@ void drawVScreenTopTitle(const SensorDisplayValues& sensorData);
 void drawVScreenLegend(const SensorDisplayValues& sensorData);
 void drawHScreenLegend(const SensorDisplayValues& sensorData);
 void drawTile(SensorDisplayTile tile, const core::Measurement& measurement);
-void drawTileValue(SensorDisplayTile tile, const core::Measurement& measurement);
+void drawTileValue(SensorDisplayTile tile,
+                   const core::Measurement& measurement);
 void eraseTileValue(SensorDisplayTile tile);
 
 /* Buffer a signal as a string */
@@ -29,8 +30,8 @@ void bufferValueAsString(char* buf, const core::Measurement& measurement);
 /* Get color with which a signal should be displayed */
 uint32_t colorOf(const core::Measurement& measurement);
 
-TFT_eSPI UptDisplay::tft;
-auto spr = TFT_eSprite(&UptDisplay::tft);
+TFT_eSPI tft;
+auto spr = TFT_eSprite(&tft);
 
 static int16_t drawXPos;
 static int16_t drawYPos;
@@ -38,7 +39,7 @@ static int16_t drawYPos;
 // ReSharper disable once CppDeclaratorNeverUsed
 static auto TAG = "VIZ";
 
-void UptDisplay::init(const Orientation orientation) {
+void init(const Orientation orientation) {
     tft.init();
     tft.setTextWrap(false);
     tft.setRotation(orientation);
@@ -50,7 +51,7 @@ void UptDisplay::init(const Orientation orientation) {
     spr.setColorDepth(16);
 }
 
-void UptDisplay::showTextScreen(const char* text) {
+void showTextScreen(const char* text) {
     drawBackground();
 
 #ifdef UPTDISPLAY_SHOW_GRID
@@ -71,7 +72,7 @@ void UptDisplay::showTextScreen(const char* text) {
     spr.unloadFont();
 }
 
-void UptDisplay::showInformationScreen(
+void showInformationScreen(
     const std::vector<std::pair<std::string, std::string>>& information,
     const byte* image, const int16_t imageHeight, const int16_t imageWidth) {
     constexpr char title[12] = "INFORMATION";
@@ -129,7 +130,7 @@ void UptDisplay::showInformationScreen(
     spr.unloadFont();
 }
 
-void UptDisplay::showSensorData(const SensorDisplayValues& data) {
+void showSensorData(const SensorDisplayValues& data) {
     uint n_value = data.measurements.size();
 
     // Wipe screen
@@ -161,7 +162,7 @@ void UptDisplay::showSensorData(const SensorDisplayValues& data) {
 #endif /* UPTDISPLAY_SHOW_GRID */
 }
 
-void UptDisplay::refreshSensorData(const SensorDisplayValues& data) {
+void refreshSensorData(const SensorDisplayValues& data) {
     uint n_value = data.measurements.size();
 
     if (n_value == 0 || n_value > 8) {
@@ -193,34 +194,33 @@ void drawDevOverlay() {
     constexpr int sep = 50;
 
     // Draw red grid lines
-    for (int x = sep; x < UptDisplay::tft.width(); x += sep) {
-        UptDisplay::tft.drawFastVLine(x, 0, UptDisplay::tft.height(), TFT_RED);
+    for (int x = sep; x < tft.width(); x += sep) {
+        tft.drawFastVLine(x, 0, tft.height(), TFT_RED);
     }
-    for (int y = sep; y < UptDisplay::tft.height(); y += sep) {
-        UptDisplay::tft.drawFastHLine(0, y, UptDisplay::tft.width(), TFT_RED);
+    for (int y = sep; y < tft.height(); y += sep) {
+        tft.drawFastHLine(0, y, tft.width(), TFT_RED);
     }
 
     // Draw coordinate info
-    for (int x = sep; x < UptDisplay::tft.width(); x += sep) {
+    for (int x = sep; x < tft.width(); x += sep) {
         char lbl[4];
         sprintf(lbl, "x%i", x);
         const auto cursorX =
-            static_cast<int16_t>(x - UptDisplay::tft.textWidth(lbl) / 2 + 1);
-        UptDisplay::tft.setCursor(cursorX, 0);
-        UptDisplay::tft.print(lbl);
+            static_cast<int16_t>(x - tft.textWidth(lbl) / 2 + 1);
+        tft.setCursor(cursorX, 0);
+        tft.print(lbl);
     }
-    for (int16_t y = sep; y < UptDisplay::tft.height(); y += sep) {
+    for (int16_t y = sep; y < tft.height(); y += sep) {
         char lbl[4];
         sprintf(lbl, "y%i", y);
-        const auto cursorY =
-            static_cast<int16_t>(y - UptDisplay::tft.fontHeight() / 2 + 1);
-        UptDisplay::tft.setCursor(0, cursorY);
-        UptDisplay::tft.print(lbl);
+        const auto cursorY = static_cast<int16_t>(y - tft.fontHeight() / 2 + 1);
+        tft.setCursor(0, cursorY);
+        tft.print(lbl);
     }
 }
 
 void drawBackground() {
-    UptDisplay::tft.fillScreen(UPT_DISPLAY_BACKGROUND_COLOR);
+    tft.fillScreen(UPT_DISPLAY_BACKGROUND_COLOR);
 }
 
 void drawVScreenTopTitle(const SensorDisplayValues& data) {
@@ -229,9 +229,8 @@ void drawVScreenTopTitle(const SensorDisplayValues& data) {
     spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
                      UPT_DISPLAY_BACKGROUND_COLOR);
     const auto cursorX = static_cast<int16_t>(
-        UptDisplay::tft.width() / 2 - spr.textWidth(data.sensorName) / 2);
-    UptDisplay::tft.setCursor(cursorX,
-                              TILE_VERTICAL_TOP_OFFSET - spr.fontHeight());
+        tft.width() / 2 - spr.textWidth(data.sensorName) / 2);
+    tft.setCursor(cursorX, TILE_VERTICAL_TOP_OFFSET - spr.fontHeight());
     spr.printToSprite(data.sensorName);
     spr.unloadFont();
 }
@@ -243,20 +242,20 @@ void drawVScreenLegend(const SensorDisplayValues& sensorData) {
                      UPT_DISPLAY_BACKGROUND_COLOR);
 
     auto cursorX = INTER_TILE_SPACING;
-    const auto cursorY = static_cast<int16_t>(
-        UptDisplay::tft.height() - spr.fontHeight() - SCREEN_FRAME_MARGIN);
+    const auto cursorY = static_cast<int16_t>(tft.height() - spr.fontHeight() -
+                                              SCREEN_FRAME_MARGIN);
 
     // Print measurement time
-    UptDisplay::tft.setCursor(cursorX, cursorY);
+    tft.setCursor(cursorX, cursorY);
     spr.printToSprite(sensorData.timeInfoStr);
 
     // Print sensor rank
     char rank[8];
     sprintf(rank, " %i/%i", sensorData.sensorRank,
             sensorData.numTrackedSensors);
-    cursorX = static_cast<int16_t>(UptDisplay::tft.width() -
-                                   INTER_TILE_SPACING - spr.textWidth(rank));
-    UptDisplay::tft.setCursor(cursorX, cursorY);
+    cursorX = static_cast<int16_t>(tft.width() - INTER_TILE_SPACING -
+                                   spr.textWidth(rank));
+    tft.setCursor(cursorX, cursorY);
     spr.printToSprite(rank);
 
     spr.unloadFont();
@@ -268,10 +267,10 @@ void drawHScreenLegend(const SensorDisplayValues& sensorData) {
     spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
                      UPT_DISPLAY_BACKGROUND_COLOR);
     auto cursorX = static_cast<int16_t>(SCREEN_FRAME_MARGIN + 5);
-    auto cursorY = static_cast<int16_t>(UptDisplay::tft.height() -
-                                        spr.fontHeight() - SCREEN_FRAME_MARGIN);
+    auto cursorY = static_cast<int16_t>(tft.height() - spr.fontHeight() -
+                                        SCREEN_FRAME_MARGIN);
 
-    UptDisplay::tft.setCursor(cursorX, cursorY);
+    tft.setCursor(cursorX, cursorY);
     char lbl[32];
     sprintf(lbl, "%s (%i/%i)", sensorData.sensorName, sensorData.sensorRank,
             sensorData.numTrackedSensors);
@@ -282,9 +281,9 @@ void drawHScreenLegend(const SensorDisplayValues& sensorData) {
     // Print measurement time
     spr.loadFont(UPT_DISPLAY_FONT_SMALL);
     cursorX += sensorLabelWidth + 5;
-    cursorY = static_cast<int16_t>(UptDisplay::tft.height() - spr.fontHeight() -
+    cursorY = static_cast<int16_t>(tft.height() - spr.fontHeight() -
                                    SCREEN_FRAME_MARGIN);
-    UptDisplay::tft.setCursor(cursorX, cursorY);
+    tft.setCursor(cursorX, cursorY);
 
     spr.printToSprite(sensorData.timeInfoStr);
     spr.unloadFont();
@@ -296,9 +295,8 @@ void drawTile(SensorDisplayTile tile, const core::Measurement& measurement) {
     const auto rectY = static_cast<int16_t>(tile.tly);
     const auto rectW = static_cast<int16_t>(tile.getWidth());
     const auto rectH = static_cast<int16_t>(tile.getHeight());
-    UptDisplay::tft.fillRoundRect(rectX, rectY, rectW, rectH,
-                                  ROUNDED_CORNER_RADIUS,
-                                  UPT_DISPLAY_TILE_PRIMARY_COLOR);
+    tft.fillRoundRect(rectX, rectY, rectW, rectH, ROUNDED_CORNER_RADIUS,
+                      UPT_DISPLAY_TILE_PRIMARY_COLOR);
 
     spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
                      UPT_DISPLAY_TILE_PRIMARY_COLOR);
@@ -306,10 +304,10 @@ void drawTile(SensorDisplayTile tile, const core::Measurement& measurement) {
     // Print signal description
     const auto cursorX = static_cast<int16_t>(tile.tlx + 10);
     const auto cursorY = static_cast<int16_t>(tile.tly + 5);
-    UptDisplay::tft.setCursor(cursorX, cursorY);
+    tft.setCursor(cursorX, cursorY);
     switch (tile.type) {
         case TileType::SMALL:
-            if (UptDisplay::tft.rotation == 1) {
+            if (tft.rotation == 1) {
                 // Load small font when in landscape
                 spr.loadFont(UPT_DISPLAY_FONT_SMALL);
             } else {
@@ -327,7 +325,7 @@ void drawTile(SensorDisplayTile tile, const core::Measurement& measurement) {
             spr.printToSprite(longSignalDescription(measurement.signalType));
             break;
         default:
-            UptDisplay::tft.print("Error");
+            tft.print("Error");
             break;
     }
     spr.unloadFont();
@@ -344,7 +342,7 @@ void eraseTileValue(SensorDisplayTile tile) {
             spr.loadFont(UPT_DISPLAY_FONT_XLARGE);
             break;
         default:
-            UptDisplay::tft.print("Error");
+            tft.print("Error");
             break;
     }
 
@@ -353,14 +351,14 @@ void eraseTileValue(SensorDisplayTile tile) {
     const auto rectW = static_cast<int16_t>(tile.getWidth());
     const auto rectH = static_cast<int16_t>(tile.bry - rectY);
 
-    UptDisplay::tft.fillRoundRect(rectX, rectY, rectW, rectH,
-                                  ROUNDED_CORNER_RADIUS,
-                                  UPT_DISPLAY_TILE_PRIMARY_COLOR);
+    tft.fillRoundRect(rectX, rectY, rectW, rectH, ROUNDED_CORNER_RADIUS,
+                      UPT_DISPLAY_TILE_PRIMARY_COLOR);
 
     spr.unloadFont();
 }
 
-void drawTileValue(SensorDisplayTile tile, const core::Measurement& measurement) {
+void drawTileValue(SensorDisplayTile tile,
+                   const core::Measurement& measurement) {
     char val[32];  // Numerical value of measurement
     bufferValueAsString(val, measurement);
     uint xShiftValue = 0;
@@ -369,7 +367,7 @@ void drawTileValue(SensorDisplayTile tile, const core::Measurement& measurement)
     switch (tile.type) {
         case TileType::SMALL:
             // Shift value if horizontal tile is too small to avoid overflow
-            if (UptDisplay::tft.rotation == 1) {
+            if (tft.rotation == 1) {
                 xShiftValue = 15;
                 yShiftValue = 2;
             }
@@ -381,7 +379,7 @@ void drawTileValue(SensorDisplayTile tile, const core::Measurement& measurement)
             spr.loadFont(UPT_DISPLAY_FONT_XLARGE);
             break;
         default:
-            UptDisplay::tft.print("Error");
+            tft.print("Error");
             break;
     }
 
@@ -395,7 +393,7 @@ void drawTileValue(SensorDisplayTile tile, const core::Measurement& measurement)
     const auto cursorY = static_cast<int16_t>(tile.getCy() + TILE_TITLE_OFFSET -
                                               spr.fontHeight() + yShiftValue);
 
-    UptDisplay::tft.setCursor(cursorX, cursorY);
+    tft.setCursor(cursorX, cursorY);
     spr.printToSprite(val);
     const int16_t valFontHeight = spr.fontHeight();
     spr.unloadFont();
@@ -413,7 +411,7 @@ void drawTileValue(SensorDisplayTile tile, const core::Measurement& measurement)
             spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
             break;
         default:
-            UptDisplay::tft.print("Error");
+            tft.print("Error");
             break;
     }
 
@@ -422,7 +420,7 @@ void drawTileValue(SensorDisplayTile tile, const core::Measurement& measurement)
                      UPT_DISPLAY_TILE_PRIMARY_COLOR);
 
     int16_t unitXPos, unitYPos;
-    if (UptDisplay::tft.rotation == 1) {
+    if (tft.rotation == 1) {
         unitXPos =
             static_cast<int16_t>(tile.getCx() + MEASUREMENT_VALUE_UNIT_SPACING +
                                  valWidth / 2 - xShiftValue);
@@ -439,7 +437,7 @@ void drawTileValue(SensorDisplayTile tile, const core::Measurement& measurement)
                                         3 * spr.fontHeight() / 4);
     }
 
-    UptDisplay::tft.setCursor(unitXPos, unitYPos);
+    tft.setCursor(unitXPos, unitYPos);
 
     spr.printToSprite(unit);
     spr.unloadFont();
@@ -493,7 +491,8 @@ uint32_t colorOf(const core::Measurement& measurement) {
             }
             return UPT_DISPLAY_RED_COLOR;
         }
-        case core::SignalType::HCHO_PARTS_PER_BILLION:  // NOLINT(*-branch-clone)
+        case core::SignalType::
+            HCHO_PARTS_PER_BILLION:  // NOLINT(*-branch-clone)
             return UPT_DISPLAY_RED_COLOR;
         case core::SignalType::PM1P0_MICRO_GRAMM_PER_CUBIC_METER:
         case core::SignalType::PM2P5_MICRO_GRAMM_PER_CUBIC_METER:
@@ -531,3 +530,5 @@ uint32_t colorOf(const core::Measurement& measurement) {
             return 0;
     }
 }
+
+}  // namespace sensirion::upt::display

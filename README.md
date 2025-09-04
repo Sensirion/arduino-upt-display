@@ -25,22 +25,22 @@ For the time being, the library comes with a limited set of functionalities.
 
 ### Orientation
 2 orientations are available: `portrait` and `landscape`.  
-The used orientation can be selected on initialization using the `UptDisplay::init` method.
+The used orientation can be selected on initialization using the `sensirion::upt::display::init` method.
 
 ### Measurements display
 The measurements are displayed in a grid with a legend on the bottom. The tiling supports between 1 and 8 signals, but more than 6 signals tend to look crowded on the hardware we use.
 
-#### UptDisplay::showSensorData
+#### sensirion::upt::display::showSensorData
 This method will wipe and redraw the whole screen (background + values). It should be called on first draw.
 
-#### UptDisplay::refreshSensorData
+#### sensirion::upt::display::refreshSensorData
 This method will only wipe the values and the legend. The background will remain. It should be called to refresh the values in order to minimize unpleasant refresh artifacts.
 
 ### Information display
-#### UptDisplay::showTextScreen
+#### sensirion::upt::display::showTextScreen
 This method will print the given text on a blank screen.
 
-#### UptDisplay::showInformationScreen
+#### sensirion::upt::display::showInformationScreen
 This method will print an information screen composed of an image and a list of key/value pairs. It can be used to show configuration alongside with a logo (or QR code) for example.
 
 See the dedicated example.

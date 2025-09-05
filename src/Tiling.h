@@ -3,6 +3,8 @@
 
 #include "Arduino.h"
 
+namespace sensirion::upt::display {
+
 #define TILE_BOTTOM_OFFSET 20
 #define TILE_VERTICAL_TOP_OFFSET 20
 #define INTER_TILE_SPACING 4
@@ -22,19 +24,19 @@ struct SensorDisplayTile {
     uint bry;
     TileType type;
 
-    uint getCx() {
+    uint getCx() const {
         return (brx + tlx) / 2;
     }
 
-    uint getCy() {
+    uint getCy() const {
         return (bry + tly) / 2;
     }
 
-    uint getHeight() {
+    uint getHeight() const {
         return bry - tly;
     }
 
-    uint getWidth() {
+    uint getWidth() const {
         return brx - tlx;
     }
 };
@@ -61,5 +63,7 @@ SensorDisplayTile* _get3VTile(uint screen_width_px, uint screen_height_px);
 SensorDisplayTile* _get4VTile(uint screen_width_px, uint screen_height_px);
 SensorDisplayTile* _get5VTile(uint screen_width_px, uint screen_height_px);
 SensorDisplayTile* _get6VTile(uint screen_width_px, uint screen_height_px);
+
+}  // namespace sensirion::upt::display
 
 #endif /* _UPT_TILING_H_ */

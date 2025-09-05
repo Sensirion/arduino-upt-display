@@ -7,16 +7,18 @@
  * It allows to display configuration information
  */
 
-#include "Sensirion_UPT_Display.h"
+#include "SensirionUptDisplay.h"
 // Image is expected to be 150px by 150px
 #include "images/tux_image_150_px.h"
 
+using namespace sensirion::upt;
+
 void setup() {
-    UptDisplay::init(landscape);
+    display::init(display::landscape);
     std::vector<std::pair<std::string, std::string>> infos = {
         {"Version", "1.0.0"}, {"Temp. unit", "celsius"}, {"WiFi", "disabled"}};
 
-    UptDisplay::showInformationScreen(infos, tux, 150, 150);
+    display::showInformationScreen(infos, tux, 150, 150);
 }
 
 void loop() {

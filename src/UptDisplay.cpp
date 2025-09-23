@@ -243,7 +243,7 @@ void drawVScreenLegend(const SensorDisplayValues& sensorData) {
     spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
                      UPT_DISPLAY_BACKGROUND_COLOR);
 
-    auto cursorX = INTER_TILE_SPACING;
+    int16_t cursorX = INTER_TILE_SPACING;
     const auto cursorY = static_cast<int16_t>(tft.height() - spr.fontHeight() -
                                               SCREEN_FRAME_MARGIN);
 
@@ -274,15 +274,15 @@ void drawHScreenLegend(const SensorDisplayValues& sensorData) {
 
     tft.setCursor(cursorX, cursorY);
     char lbl[32];
-    sprintf(lbl, "%s (%i/%i)", sensorData.sensorName, sensorData.sensorRank,
-            sensorData.numTrackedSensors);
+    sprintf(lbl, "%s (%i/%i)", sensorData.sensorName.c_str(),
+            sensorData.sensorRank, sensorData.numTrackedSensors);
     spr.printToSprite(lbl);
-    int sensorLabelWidth = spr.textWidth(lbl);
+    const uint16_t sensorLabelWidth = spr.textWidth(lbl);
     spr.unloadFont();
 
     // Print measurement time
     spr.loadFont(UPT_DISPLAY_FONT_SMALL);
-    cursorX += sensorLabelWidth + 5;
+    cursorX = static_cast<int16_t>(cursorX + sensorLabelWidth + 5);
     cursorY = static_cast<int16_t>(tft.height() - spr.fontHeight() -
                                    SCREEN_FRAME_MARGIN);
     tft.setCursor(cursorX, cursorY);
@@ -449,6 +449,7 @@ void drawTileValue(const SensorDisplayTile& tile,
 
 std::string bufferValueAsString(const core::Measurement& measurement) {
     std::stringstream ss{};
+    ss << std::fixed;  // use fixed notation for numbers.
     core::SignalType st = measurement.signalType;
     if (st == core::SignalType::TEMPERATURE_DEGREES_CELSIUS ||
         st == core::SignalType::TEMPERATURE_DEGREES_FARENHEIT ||
@@ -456,7 +457,7 @@ std::string bufferValueAsString(const core::Measurement& measurement) {
         st == core::SignalType::VELOCITY_METERS_PER_SECOND ||
         st == core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE) {
         ss.precision(1);
-    } else if (measurement.dataPoint.value < 10.0) {
+    } else if (measurement.dataPoint.value < 10.0) {  // NOLINT(*-branch-clone)
         // A workaround because single char is not being displayed. can be
         // removed in the future
         ss.precision(0);
@@ -498,8 +499,8 @@ uint32_t colorOf(const core::Measurement& measurement) {
             }
             return UPT_DISPLAY_RED_COLOR;
         }
-        case core::SignalType::
-            HCHO_PARTS_PER_BILLION:  // NOLINT(*-branch-clone)
+        case core::SignalType::  // NOLINT(*-branch-clone)
+            HCHO_PARTS_PER_BILLION:
             return UPT_DISPLAY_RED_COLOR;
         case core::SignalType::PM1P0_MICRO_GRAMM_PER_CUBIC_METER:
         case core::SignalType::PM2P5_MICRO_GRAMM_PER_CUBIC_METER:

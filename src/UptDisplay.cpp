@@ -460,6 +460,7 @@ std::string bufferValueAsString(const core::Measurement& measurement) {
     } else if (measurement.dataPoint.value < 10.0) {  // NOLINT(*-branch-clone)
         // A workaround because single char is not being displayed. can be
         // removed in the future
+        ss << " ";
         ss.precision(0);
     } else {
         ss.precision(0);

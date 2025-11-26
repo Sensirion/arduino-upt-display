@@ -455,7 +455,8 @@ std::string bufferValueAsString(const core::Measurement& measurement) {
         st == core::SignalType::TEMPERATURE_DEGREES_FARENHEIT ||
         st == core::SignalType::RELATIVE_HUMIDITY_PERCENTAGE ||
         st == core::SignalType::VELOCITY_METERS_PER_SECOND ||
-        st == core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE) {
+        st == core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE ||
+        st == core::SignalType::H2_CONCENTRATION_VOLUME_PERCENTAGE) {
         ss.precision(1);
     } else if (measurement.dataPoint.value < 10.0) {  // NOLINT(*-branch-clone)
         // A workaround because single char is not being displayed. can be
@@ -534,6 +535,8 @@ uint32_t colorOf(const core::Measurement& measurement) {
             return UPT_DISPLAY_RED_COLOR;
         }
         case core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE:
+        case core::SignalType::H2_CONCENTRATION_VOLUME_PERCENTAGE:
+        case core::SignalType::PRESSURE_MBAR:
             return UPT_DISPLAY_GREEN_COLOR;
         default:
             return 0;

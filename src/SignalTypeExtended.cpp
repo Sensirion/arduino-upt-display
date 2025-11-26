@@ -33,6 +33,10 @@ std::string longSignalDescription(const core::SignalType signalType) {
             return "Nitrous Oxide Index";
         case core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE:
             return "Gas Concentration";
+        case core::SignalType::H2_CONCENTRATION_VOLUME_PERCENTAGE:
+            return "H2 Concentration";
+        case core::SignalType::PRESSURE_MBAR:
+            return "Pressure";
         default:
             return "UNDEFINED";
     }
@@ -69,6 +73,10 @@ std::string medSignalDescription(const core::SignalType signalType) {
             return "Nitrous Oxide";
         case core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE:
             return "Gas Conc.";
+        case core::SignalType::H2_CONCENTRATION_VOLUME_PERCENTAGE:
+            return "H2 Conc.";
+        case core::SignalType::PRESSURE_MBAR:
+            return "Pressure";
         default:
             return "UNDEFINED";
     }
@@ -105,6 +113,10 @@ std::string shortSignalDescription(const core::SignalType signalType) {
             return "NOX Idx.";
         case core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE:
             return "Gas Conc.";
+        case core::SignalType::H2_CONCENTRATION_VOLUME_PERCENTAGE:
+            return "H2 Conc.";\
+        case core::SignalType::PRESSURE_MBAR:
+            return "P";
         default:
             return "UNDEFINED";
     }
@@ -135,6 +147,7 @@ std::string signalIcon(const core::SignalType signalType) {
         case core::SignalType::RAW_NOX_INDEX:
             return " ";
         case core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE:
+        case core::SignalType::H2_CONCENTRATION_VOLUME_PERCENTAGE:
             return " ";
         default:
             return "  ";
@@ -167,6 +180,10 @@ std::string getGraphicSignalUnit(const core::SignalType& signalType) {
             return "";
         case core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE:
             return "% ";
+        case core::SignalType::H2_CONCENTRATION_VOLUME_PERCENTAGE:
+            return "vol%";
+        case core::SignalType::PRESSURE_MBAR:
+            return "mbar";
         default:
             return "error";
     }

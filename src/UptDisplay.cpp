@@ -365,7 +365,7 @@ void eraseTileValue(const SensorDisplayTile& tile) {
 
 void drawTileValue(const SensorDisplayTile& tile,
                    const core::Measurement& measurement) {
-    auto val = bufferValueAsString(measurement);
+    const auto val = bufferValueAsString(measurement);
     uint xShiftValue = 0;
     uint yShiftValue = 0;
 
@@ -388,11 +388,10 @@ void drawTileValue(const SensorDisplayTile& tile,
             break;
     }
 
-    int valWidth = spr.textWidth(val.c_str());
+    const int valWidth = spr.textWidth(val.c_str());
     spr.setTextColor(colorOf(measurement), UPT_DISPLAY_TILE_PRIMARY_COLOR);
 
     // Offset height because of title
-
     const auto cursorX =
         static_cast<int16_t>(tile.getCx() - valWidth / 2 - xShiftValue);
     const auto cursorY = static_cast<int16_t>(tile.getCy() + TILE_TITLE_OFFSET -
@@ -403,7 +402,7 @@ void drawTileValue(const SensorDisplayTile& tile,
     const int16_t valFontHeight = spr.fontHeight();
     spr.unloadFont();
 
-    std::string unit = getGraphicSignalUnit(measurement.signalType);
+    const std::string unit = getGraphicSignalUnit(measurement.signalType);
 
     switch (tile.type) {
         case TileType::SMALL:
@@ -429,7 +428,7 @@ void drawTileValue(const SensorDisplayTile& tile,
             static_cast<int16_t>(tile.getCx() + MEASUREMENT_VALUE_UNIT_SPACING +
                                  valWidth / 2 - xShiftValue);
         // Note: here we shift by 1/4 of font height because we need to ignore
-        // the descendant part of the font and we estimate it at 1/4th of the
+        // the descendant part of the font, and we estimate it at 1/4th of the
         // height.
         unitYPos = static_cast<int16_t>(cursorY + 3 * valFontHeight / 4 -
                                         3 * spr.fontHeight() / 4);
@@ -450,7 +449,7 @@ void drawTileValue(const SensorDisplayTile& tile,
 std::string bufferValueAsString(const core::Measurement& measurement) {
     std::stringstream ss{};
     ss << std::fixed;  // use fixed notation for numbers.
-    core::SignalType st = measurement.signalType;
+    const core::SignalType st = measurement.signalType;
     if (st == core::SignalType::TEMPERATURE_DEGREES_CELSIUS ||
         st == core::SignalType::TEMPERATURE_DEGREES_FARENHEIT ||
         st == core::SignalType::RELATIVE_HUMIDITY_PERCENTAGE ||
@@ -458,16 +457,22 @@ std::string bufferValueAsString(const core::Measurement& measurement) {
         st == core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE ||
         st == core::SignalType::H2_CONCENTRATION_VOLUME_PERCENTAGE) {
         ss.precision(1);
-    } else if (measurement.dataPoint.value < 10.0) {  // NOLINT(*-branch-clone)
-        // A workaround because single char is not being displayed. can be
-        // removed in the future
-        ss << " ";
-        ss.precision(0);
     } else {
         ss.precision(0);
     }
+
     ss << measurement.dataPoint.value;
-    return ss.str();
+    std::string val = ss.str();
+    const auto value_str_size = static_cast<int16_t>(3 - val.size());
+    if (value_str_size > 0) {
+        // A workaround because less than 3 char is randomly not being
+        // displayed. Prepending empty strings to make it a 3-character string.
+        // This is preferred over a regular space which may be stripped or
+        // ignored by the rendering engine.
+        return std::string(value_str_size, ' ') + val;
+    }
+
+    return val;
 }
 
 uint32_t colorOf(const core::Measurement& measurement) {

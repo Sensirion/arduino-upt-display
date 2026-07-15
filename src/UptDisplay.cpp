@@ -14,26 +14,26 @@ namespace sensirion::upt::display {
 
 // Dev grid overlay can be enabled by compiling with the flag
 // UPTDISPLAY_SHOW_GRID
-void drawDevOverlay();
+static void drawDevOverlay();
 
-void drawBackground();
-void drawVScreenTopTitle(const SensorDisplayValues& sensorData);
-void drawVScreenLegend(const SensorDisplayValues& sensorData);
-void drawHScreenLegend(const SensorDisplayValues& sensorData);
-void drawTile(const SensorDisplayTile& tile,
-              const core::Measurement& measurement);
-void drawTileValue(const SensorDisplayTile& tile,
-                   const core::Measurement& measurement);
-void eraseTileValue(const SensorDisplayTile& tile);
+static void drawBackground();
+static void drawVScreenTopTitle(const SensorDisplayValues& sensorData);
+static void drawVScreenLegend(const SensorDisplayValues& sensorData);
+static void drawHScreenLegend(const SensorDisplayValues& sensorData);
+static void drawTile(const SensorDisplayTile& tile,
+                     const core::Measurement& measurement);
+static void drawTileValue(const SensorDisplayTile& tile,
+                          const core::Measurement& measurement);
+static void eraseTileValue(const SensorDisplayTile& tile);
 
 /* Buffer a signal as a string */
-std::string bufferValueAsString(const core::Measurement& measurement);
+static std::string bufferValueAsString(const core::Measurement& measurement);
 
 /* Get color with which a signal should be displayed */
-uint32_t colorOf(const core::Measurement& measurement);
+static uint32_t colorOf(const core::Measurement& measurement);
 
 TFT_eSPI tft;
-auto spr = TFT_eSprite(&tft);
+static auto spr = TFT_eSprite(&tft);
 
 static int16_t drawXPos;
 static int16_t drawYPos;
@@ -150,14 +150,18 @@ void showSensorData(const SensorDisplayValues& data) {
         drawHScreenLegend(data);
     }
 
-    SensorDisplayTile* tiles = getNTiles(n_value, tft.width(), tft.height());
+    const SensorDisplayTile* tiles =
+        getNTiles(n_value, tft.width(), tft.height());
+
+    if (tiles == nullptr)
+        return;
 
     for (int i = 0; i < n_value; i++) {
         drawTile(tiles[i], data.measurements[i]);
         drawTileValue(tiles[i], data.measurements[i]);
     }
 
-    delete tiles;
+    delete[] tiles;
 
 #ifdef UPTDISPLAY_SHOW_GRID
     drawDevOverlay();
@@ -178,14 +182,18 @@ void refreshSensorData(const SensorDisplayValues& data) {
         drawHScreenLegend(data);
     }
 
-    SensorDisplayTile* tiles = getNTiles(n_value, tft.width(), tft.height());
+    const SensorDisplayTile* tiles =
+        getNTiles(n_value, tft.width(), tft.height());
+
+    if (tiles == nullptr)
+        return;
 
     for (int i = 0; i < n_value; i++) {
         eraseTileValue(tiles[i]);
         drawTileValue(tiles[i], data.measurements[i]);
     }
 
-    delete tiles;
+    delete[] tiles;
 
 #ifdef UPTDISPLAY_SHOW_GRID
     drawDevOverlay();
@@ -232,7 +240,7 @@ void drawVScreenTopTitle(const SensorDisplayValues& data) {
                      UPT_DISPLAY_BACKGROUND_COLOR);
     const auto cursorX = static_cast<int16_t>(
         tft.width() / 2 - spr.textWidth(data.sensorName.c_str()) / 2);
-    tft.setCursor(cursorX, TILE_VERTICAL_TOP_OFFSET - spr.fontHeight());
+    tft.setCursor(cursorX, TILE_OFFSET - spr.fontHeight());
     spr.printToSprite(data.sensorName.c_str());
     spr.unloadFont();
 }
@@ -243,7 +251,7 @@ void drawVScreenLegend(const SensorDisplayValues& sensorData) {
     spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
                      UPT_DISPLAY_BACKGROUND_COLOR);
 
-    int16_t cursorX = INTER_TILE_SPACING;
+    int16_t cursorX = TILE_MARGIN;
     const auto cursorY = static_cast<int16_t>(tft.height() - spr.fontHeight() -
                                               SCREEN_FRAME_MARGIN);
 
@@ -255,8 +263,8 @@ void drawVScreenLegend(const SensorDisplayValues& sensorData) {
     char rank[8];
     sprintf(rank, " %i/%i", sensorData.sensorRank,
             sensorData.numTrackedSensors);
-    cursorX = static_cast<int16_t>(tft.width() - INTER_TILE_SPACING -
-                                   spr.textWidth(rank));
+    cursorX =
+        static_cast<int16_t>(tft.width() - TILE_MARGIN - spr.textWidth(rank));
     tft.setCursor(cursorX, cursorY);
     spr.printToSprite(rank);
 
@@ -294,19 +302,15 @@ void drawHScreenLegend(const SensorDisplayValues& sensorData) {
 void drawTile(const SensorDisplayTile& tile,
               const core::Measurement& measurement) {
     // Draw Tile
-    const auto rectX = static_cast<int16_t>(tile.tlx);
-    const auto rectY = static_cast<int16_t>(tile.tly);
-    const auto rectW = static_cast<int16_t>(tile.getWidth());
-    const auto rectH = static_cast<int16_t>(tile.getHeight());
-    tft.fillRoundRect(rectX, rectY, rectW, rectH, ROUNDED_CORNER_RADIUS,
-                      UPT_DISPLAY_TILE_PRIMARY_COLOR);
+    tft.fillRoundRect(tile.topLeft.x, tile.topLeft.y, tile.width, tile.height,
+                      ROUNDED_CORNER_RADIUS, UPT_DISPLAY_TILE_PRIMARY_COLOR);
 
     spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
                      UPT_DISPLAY_TILE_PRIMARY_COLOR);
 
     // Print signal description
-    const auto cursorX = static_cast<int16_t>(tile.tlx + 10);
-    const auto cursorY = static_cast<int16_t>(tile.tly + 5);
+    const auto cursorX = static_cast<int16_t>(tile.topLeft.x + 10);
+    const auto cursorY = static_cast<int16_t>(tile.topLeft.y + 5);
     tft.setCursor(cursorX, cursorY);
     switch (tile.type) {
         case TileType::SMALL:
@@ -352,10 +356,10 @@ void eraseTileValue(const SensorDisplayTile& tile) {
             break;
     }
 
-    const auto rectX = static_cast<int16_t>(tile.tlx);
-    const auto rectY = static_cast<int16_t>(tile.tly + TILE_TITLE_OFFSET);
-    const auto rectW = static_cast<int16_t>(tile.getWidth());
-    const auto rectH = static_cast<int16_t>(tile.bry - rectY);
+    const auto rectX = tile.topLeft.x;
+    const auto rectY = tile.topLeft.y + TILE_TITLE_OFFSET;
+    const auto rectW = tile.width;
+    const auto rectH = tile.getBottomRight().y - rectY;
 
     tft.fillRoundRect(rectX, rectY, rectW, rectH, ROUNDED_CORNER_RADIUS,
                       UPT_DISPLAY_TILE_PRIMARY_COLOR);
@@ -392,9 +396,9 @@ void drawTileValue(const SensorDisplayTile& tile,
     spr.setTextColor(colorOf(measurement), UPT_DISPLAY_TILE_PRIMARY_COLOR);
 
     // Offset height because of title
-    const auto cursorX =
-        static_cast<int16_t>(tile.getCx() - valWidth / 2 - xShiftValue);
-    const auto cursorY = static_cast<int16_t>(tile.getCy() + TILE_TITLE_OFFSET -
+    const auto [cx, cy] = tile.getCenter();
+    const auto cursorX = static_cast<int16_t>(cx - valWidth / 2 - xShiftValue);
+    const auto cursorY = static_cast<int16_t>(cy + TILE_TITLE_OFFSET -
                                               spr.fontHeight() + yShiftValue);
 
     tft.setCursor(cursorX, cursorY);
@@ -424,9 +428,9 @@ void drawTileValue(const SensorDisplayTile& tile,
 
     int16_t unitXPos, unitYPos;
     if (tft.rotation == 1) {
-        unitXPos =
-            static_cast<int16_t>(tile.getCx() + MEASUREMENT_VALUE_UNIT_SPACING +
-                                 valWidth / 2 - xShiftValue);
+        unitXPos = static_cast<int16_t>(tile.getCenter().x +
+                                        MEASUREMENT_VALUE_UNIT_SPACING +
+                                        valWidth / 2 - xShiftValue);
         // Note: here we shift by 1/4 of font height because we need to ignore
         // the descendant part of the font, and we estimate it at 1/4th of the
         // height.
@@ -434,9 +438,10 @@ void drawTileValue(const SensorDisplayTile& tile,
                                         3 * spr.fontHeight() / 4);
     } else {
 
-        unitXPos = static_cast<int16_t>(tile.brx - ROUNDED_CORNER_RADIUS -
+        const auto [brx, bry] = tile.getBottomRight();
+        unitXPos = static_cast<int16_t>(brx - ROUNDED_CORNER_RADIUS -
                                         spr.textWidth(unit.c_str()));
-        unitYPos = static_cast<int16_t>(tile.bry - ROUNDED_CORNER_RADIUS -
+        unitYPos = static_cast<int16_t>(bry - ROUNDED_CORNER_RADIUS -
                                         3 * spr.fontHeight() / 4);
     }
 

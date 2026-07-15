@@ -1,72 +1,95 @@
 # Sensirion UPT Display
+
 [![PlatformIO Registry](https://badges.registry.platformio.org/packages/sensirion/library/Sensirion%20UPT%20Display.svg)](https://registry.platformio.org/libraries/sensirion/Sensirion%20UPT%20Display)  [![arduino-library-badge](https://www.ardu-badge.com/badge/Sensirion%20UPT%20Display.svg?)](https://docs.arduino.cc/libraries/sensirion-upt-display)  
 This library is meant to simplify the display of UPT measurements on supported boards (see below).
 
-This library is part of *Sensirion Unified Prototyping Toolkit (UPT)*. A set of libraries aiming to simplify the creation of environment monitoring devices.
+This library is part of *Sensirion Unified Prototyping Toolkit (UPT)*. A set of libraries aiming to simplify the
+creation of environment monitoring devices.
 
 A simple example about how to use the library is provided in `basicUsage.ino`.
 
 ## Hardware
+
 The library has been designed for `Lilygo T-Display S3` but could be used with other display/board combo.
 Some more references and documentation will be added in the future. Feel free to contribute with your findings as well.
 
 ### Tested displays
+
 Here is the list of supported and tested displays:
 
-| Board      | UserSetup      |Remarks / Necessary changes      |
-| ------------- | ------------- |------------- |
-| **Lilygo T-Display S3** | Setup206_LilyGo_T_Display_S3 | Our target device |
-| Lilygo TTGO T-Display | Setup25_TTGO_T_Display | Requires loading smaller fonts |
-| Lilygo T-embed | Setup210_LilyGo_T_Embed_S3 | Requires raising pin `46` to high on setup |
-
+| Board                   | UserSetup                    | Remarks / Necessary changes                |
+|-------------------------|------------------------------|--------------------------------------------|
+| **Lilygo T-Display S3** | Setup206_LilyGo_T_Display_S3 | Our target device                          |
+| Lilygo TTGO T-Display   | Setup25_TTGO_T_Display       | Requires loading smaller fonts             |
+| Lilygo T-embed          | Setup210_LilyGo_T_Embed_S3   | Requires raising pin `46` to high on setup |
 
 ## Functionalities
+
 For the time being, the library comes with a limited set of functionalities.
 
 ### Orientation
+
 2 orientations are available: `portrait` and `landscape`.  
 The used orientation can be selected on initialization using the `sensirion::upt::display::init` method.
 
 ### Measurements display
-The measurements are displayed in a grid with a legend on the bottom. The tiling supports between 1 and 8 signals, but more than 6 signals tend to look crowded on the hardware we use.
+
+The measurements are displayed in a grid with a legend on the bottom. The tiling supports between 1 and 8 signals, but
+more than 6 signals tend to look crowded on the hardware we use.
 
 #### sensirion::upt::display::showSensorData
+
 This method will wipe and redraw the whole screen (background + values). It should be called on first draw.
 
 #### sensirion::upt::display::refreshSensorData
-This method will only wipe the values and the legend. The background will remain. It should be called to refresh the values in order to minimize unpleasant refresh artifacts.
+
+This method will only wipe the values and the legend. The background will remain. It should be called to refresh the
+values in order to minimize unpleasant refresh artifacts.
 
 ### Information display
+
 #### sensirion::upt::display::showTextScreen
+
 This method will print the given text on a blank screen.
 
 #### sensirion::upt::display::showInformationScreen
-This method will print an information screen composed of an image and a list of key/value pairs. It can be used to show configuration alongside with a logo (or QR code) for example.
+
+This method will print an information screen composed of an image and a list of key/value pairs. It can be used to show
+configuration alongside with a logo (or QR code) for example.
 
 See the dedicated example.
 
 ## Dependencies
-### TFT_eSPI
-The UPT-Display library depends on the great work done by the [*TFT_eSPI* library](https://github.com/Bodmer/TFT_eSPI). 
 
-After installation of the dependency, the right screen configuration needs to be selected using the `User_Setup_Select.h`.  
-I.e. for Lilygo T-Display S3 (our target board), the line `#include <User_Setups/Setup206_LilyGo_T_Display_S3.h>` needs to be uncommented and the line `#include <User_Setup.h>` 
-needs to be commented.
+### TFT_eSPI
+
+The UPT-Display library depends on the great work done by the [*TFT_eSPI* library](https://github.com/Bodmer/TFT_eSPI).
+
+The library is installed as a dependency, and the user setup for the LillyGo-T-Display-S3 is selected through build
+flag `UPT_DISPLAY_TFT_ESPI_USER_SETUP`. If a different setup is required, the user setup can be changed by defining
+a different value for the build flag `UPT_DISPLAY_TFT_ESPI_USER_SETUP`.
+
 Please refer to the documentation of the *TFT_eSPI* library for the most up-to-date installation instructions.
 
-[!Note]: 
+[!Note]:
 When using the examples with platform.io, this screen selection has to be done for each example!
 
 ## Fonts
-The font used is `LiberationSans` you can generate and define your own font header files using instructions from *TFT_eSPI*.
-The font files are generated by `Processing IDE` using a sketch included in the library `Tools` folder of eSPI_TFT lib.   
+
+The font used is `LiberationSans` you can generate and define your own font header files using instructions from
+*TFT_eSPI*.
+The font files are generated by `Processing IDE` using a sketch included in the library `Tools` folder of eSPI_TFT
+lib.   
 You will find the required charset configuration below.
 
 ### Processing sketch configuration for custom font
-The base character set required is:  
+
+The base character set required is:
+
  ```
  0x0021, 0x007E, //Basic Latin, 128, 128, Latin (52), Common (76 characters)
  ```  
+
 the following extra characters are also needed:
 
  ```
@@ -86,10 +109,12 @@ static final int[] specificUnicodes = {
 }
  ```
 
- ### Using a custom font
- The font selection can be overwritten using `#define UPT_DISPLAY_FONT_CONFIG` as it is done in `DefaultFont.h`.
- The easiest is to make a copy of `DefaultFont.h` (e.g., name it `MyFont.h`) and include it in your main script.
- In your custom font header file, you can then redefine all the required sizes as follows:
+### Using a custom font
+
+The font selection can be overwritten using `#define UPT_DISPLAY_FONT_CONFIG` as it is done in `DefaultFont.h`.
+The easiest is to make a copy of `DefaultFont.h` (e.g., name it `MyFont.h`) and include it in your main script.
+In your custom font header file, you can then redefine all the required sizes as follows:
+
  ```
  #include "yourFont10.h"
 ...

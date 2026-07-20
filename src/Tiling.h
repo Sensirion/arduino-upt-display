@@ -1,13 +1,13 @@
-#ifndef _TILING_H_
-#define _TILING_H_
+#ifndef UPT_TILING_H
+#define UPT_TILING_H
 
 #include "Arduino.h"
+#include "Vector2.h"
 
 namespace sensirion::upt::display {
 
-#define TILE_BOTTOM_OFFSET 20
-#define TILE_VERTICAL_TOP_OFFSET 20
-#define INTER_TILE_SPACING 4
+#define TILE_OFFSET 20
+#define TILE_MARGIN 4
 
 /**
  * @brief Represent the size category of a tile
@@ -18,26 +18,21 @@ enum struct TileType { UNDEFINED, SMALL, NARROW, MEDIUM, LARGE };
  * @brief Contains the location and size information of a tile
  */
 struct SensorDisplayTile {
-    uint tlx;
-    uint tly;
-    uint brx;
-    uint bry;
+    Vector2 topLeft;
+
+    uint16_t width;
+    uint16_t height;
+
     TileType type;
 
-    uint getCx() const {
-        return (brx + tlx) / 2;
+    [[nodiscard]] Vector2 getCenter() const {
+        return {static_cast<int16_t>(topLeft.x + (width / 2)),
+                static_cast<int16_t>(topLeft.y + height / 2)};
     }
 
-    uint getCy() const {
-        return (bry + tly) / 2;
-    }
-
-    uint getHeight() const {
-        return bry - tly;
-    }
-
-    uint getWidth() const {
-        return brx - tlx;
+    [[nodiscard]] Vector2 getBottomRight() const {
+        return {static_cast<int16_t>(topLeft.x + width),
+                static_cast<int16_t>(topLeft.y + height)};
     }
 };
 
@@ -45,25 +40,8 @@ struct SensorDisplayTile {
  * @brief Returns a pointer to a list of N SensorDisplayTile filling the
  * given screen dimensions
  */
-SensorDisplayTile* getNTiles(uint n, uint screen_width_px,
-                             uint screen_height_px);
-
-SensorDisplayTile* _get1Tile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get2Tile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get3Tile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get4Tile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get5Tile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get6Tile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get7Tile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get8Tile(uint screen_width_px, uint screen_height_px);
-
-SensorDisplayTile* _get1VTile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get2VTile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get3VTile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get4VTile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get5VTile(uint screen_width_px, uint screen_height_px);
-SensorDisplayTile* _get6VTile(uint screen_width_px, uint screen_height_px);
-
+SensorDisplayTile* getNTiles(uint16_t numTiles, uint16_t screenWidthPx,
+                             uint16_t screenHeightPx);
 }  // namespace sensirion::upt::display
 
-#endif /* _UPT_TILING_H_ */
+#endif /* UPT_TILING_H */

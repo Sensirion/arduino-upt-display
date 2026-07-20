@@ -1,5 +1,5 @@
-#ifndef _SENSIRION_COLORS_H_
-#define _SENSIRION_COLORS_H_
+#ifndef SENSIRION_COLORS_H
+#define SENSIRION_COLORS_H
 
 namespace sensirion::upt::display {
 
@@ -41,4 +41,4 @@ namespace sensirion::upt::display {
 
 }  // namespace sensirion::upt::display
 
-#endif /* _SENSIRION_COLORS_H_ */
+#endif /* SENSIRION_COLORS_H */

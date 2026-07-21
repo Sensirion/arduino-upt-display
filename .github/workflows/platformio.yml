@@ -14,13 +14,13 @@ jobs:
   PlatformIO-Check:
     uses: sensirion/.github/.github/workflows/upt.platformio.check.yml@main
     with:
-      pio-environment-list: '["basicUsage", "infoPage"]'
+      pio-environment-list: '["basicUsage", "infoPage", "basicUsageAmoled"]'
 
   PlatformIO-Build:
     uses: sensirion/.github/.github/workflows/upt.platformio.build.yml@main
     needs: PlatformIO-Check
     with:
-      pio-environment-list: '["basicUsage", "infoPage"]'
+      pio-environment-list: '["basicUsage", "infoPage", "basicUsageAmoled"]'
 
   PlatformIO-PackageAndPublish:
     name: PIO - Package and Publish on Tag

@@ -17,6 +17,7 @@ namespace sensirion::upt::display {
 static void drawDevOverlay();
 
 static void drawBackground();
+static void eraseLegend();
 static void drawVScreenTopTitle(const SensorDisplayValues& sensorData);
 static void drawVScreenLegend(const SensorDisplayValues& sensorData);
 static void drawHScreenLegend(const SensorDisplayValues& sensorData);
@@ -67,6 +68,7 @@ void showTextScreen(const char* text) {
     _display->drawText(text, cursorX, cursorY, Font::MEDIUM,
                        UPT_DISPLAY_FONT_PRIMARY_COLOR,
                        UPT_DISPLAY_BACKGROUND_COLOR);
+    _display->flush();
 }
 
 void showInformationScreen(
@@ -123,6 +125,7 @@ void showInformationScreen(
 
         y_line = static_cast<int16_t>(y_line + f_height + 6);
     }
+    _display->flush();
 }
 
 void showSensorData(const SensorDisplayValues& data) {
@@ -153,12 +156,12 @@ void showSensorData(const SensorDisplayValues& data) {
         drawTile(tiles[i], data.measurements[i]);
         drawTileValue(tiles[i], data.measurements[i]);
     }
-
-    delete[] tiles;
-
 #ifdef UPTDISPLAY_SHOW_GRID
     drawDevOverlay();
 #endif /* UPTDISPLAY_SHOW_GRID */
+    _display->flush();
+
+    delete[] tiles;
 }
 
 void refreshSensorData(const SensorDisplayValues& data) {
@@ -169,6 +172,7 @@ void refreshSensorData(const SensorDisplayValues& data) {
         return;
     }
 
+    eraseLegend();
     if (_display->getRotation() == Orientation::portrait) {
         drawVScreenLegend(data);
     } else {
@@ -185,12 +189,12 @@ void refreshSensorData(const SensorDisplayValues& data) {
         eraseTileValue(tiles[i]);
         drawTileValue(tiles[i], data.measurements[i]);
     }
-
-    delete[] tiles;
-
 #ifdef UPTDISPLAY_SHOW_GRID
     drawDevOverlay();
 #endif /* UPTDISPLAY_SHOW_GRID */
+    _display->flush();
+
+    delete[] tiles;
 }
 
 void drawDevOverlay() {
@@ -198,12 +202,10 @@ void drawDevOverlay() {
 
     // Draw red grid lines
     for (uint16_t x = sep; x < _display->getWidth(); x += sep) {
-        _display->drawVLine(x, 0, _display->getHeight(),
-                                UPT_DISPLAY_RED_COLOR);
+        _display->drawVLine(x, 0, _display->getHeight(), UPT_DISPLAY_RED_COLOR);
     }
     for (uint16_t y = sep; y < _display->getHeight(); y += sep) {
-        _display->drawHLine(0, y, _display->getWidth(),
-                                UPT_DISPLAY_RED_COLOR);
+        _display->drawHLine(0, y, _display->getWidth(), UPT_DISPLAY_RED_COLOR);
     }
 
     // Draw coordinate info
@@ -227,6 +229,15 @@ void drawDevOverlay() {
 
 void drawBackground() {
     _display->fillScreen(UPT_DISPLAY_BACKGROUND_COLOR);
+    _display->flush();
+}
+
+void eraseLegend() {
+    const uint16_t h =
+        _display->getFontHeight(Font::MEDIUM) + SCREEN_FRAME_MARGIN;
+    const auto y = static_cast<uint16_t>(_display->getHeight() - h);
+    _display->fillRoundRect(0, y, _display->getWidth(), h, 0,
+                            UPT_DISPLAY_BACKGROUND_COLOR);
 }
 
 void drawVScreenTopTitle(const SensorDisplayValues& sensorData) {
@@ -303,7 +314,13 @@ void drawTile(const SensorDisplayTile& tile,
 
     switch (tile.type) {
         case TileType::SMALL:
-            if (_display->getRotation() == Orientation::landscape) {
+            _display->drawText(
+                shortSignalDescription(measurement.signalType).c_str(), cursorX,
+                cursorY, Font::SMALL, UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                UPT_DISPLAY_TILE_PRIMARY_COLOR);
+            break;
+        case TileType::NARROW:
+            if (_display->getRotation() == Orientation::portrait) {
                 _display->drawText(
                     shortSignalDescription(measurement.signalType).c_str(),
                     cursorX, cursorY, Font::SMALL,
@@ -311,24 +328,41 @@ void drawTile(const SensorDisplayTile& tile,
                     UPT_DISPLAY_TILE_PRIMARY_COLOR);
             } else {
                 _display->drawText(
-                    shortSignalDescription(measurement.signalType).c_str(),
+                    medSignalDescription(measurement.signalType).c_str(),
                     cursorX, cursorY, Font::MEDIUM,
                     UPT_DISPLAY_FONT_PRIMARY_COLOR,
                     UPT_DISPLAY_TILE_PRIMARY_COLOR);
             }
             break;
-        case TileType::NARROW:
         case TileType::MEDIUM:
-            _display->drawText(
-                medSignalDescription(measurement.signalType).c_str(), cursorX,
-                cursorY, Font::MEDIUM, UPT_DISPLAY_FONT_PRIMARY_COLOR,
-                UPT_DISPLAY_TILE_PRIMARY_COLOR);
+            if (_display->getRotation() == Orientation::portrait) {
+                _display->drawText(
+                    shortSignalDescription(measurement.signalType).c_str(),
+                    cursorX, cursorY, Font::SMALL,
+                    UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                    UPT_DISPLAY_TILE_PRIMARY_COLOR);
+            } else {
+                _display->drawText(
+                    medSignalDescription(measurement.signalType).c_str(),
+                    cursorX, cursorY, Font::MEDIUM,
+                    UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                    UPT_DISPLAY_TILE_PRIMARY_COLOR);
+            }
             break;
         case TileType::LARGE:
-            _display->drawText(
-                longSignalDescription(measurement.signalType).c_str(), cursorX,
-                cursorY, Font::MEDIUM, UPT_DISPLAY_FONT_PRIMARY_COLOR,
-                UPT_DISPLAY_TILE_PRIMARY_COLOR);
+            if (_display->getRotation() == Orientation::portrait) {
+                _display->drawText(
+                    medSignalDescription(measurement.signalType).c_str(),
+                    cursorX, cursorY, Font::SMALL,
+                    UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                    UPT_DISPLAY_TILE_PRIMARY_COLOR);
+            } else {
+                _display->drawText(
+                    longSignalDescription(measurement.signalType).c_str(),
+                    cursorX, cursorY, Font::MEDIUM,
+                    UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                    UPT_DISPLAY_TILE_PRIMARY_COLOR);
+            }
             break;
         default:
             break;

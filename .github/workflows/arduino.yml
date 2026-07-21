@@ -12,3 +12,6 @@ jobs:
       expect-arduino-examples: true
       lint-lib-manager-check: update
       fqbn-list: "['esp32:esp32:esp32']"
+      sketch-paths: |-
+        - examples/basicUsage
+        - examples/infoPage

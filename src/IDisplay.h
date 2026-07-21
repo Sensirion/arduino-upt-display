@@ -37,6 +37,8 @@ class IDisplay {
                           uint16_t color, uint16_t bgColor) = 0;
     virtual uint16_t getTextWidth(const char* text, Font font) const = 0;
     [[nodiscard]] virtual uint16_t getFontHeight(Font font) const = 0;
+
+    virtual void flush() {}
 };
 
 }  // namespace sensirion::upt::display

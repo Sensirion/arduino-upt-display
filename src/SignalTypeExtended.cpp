@@ -114,7 +114,7 @@ std::string shortSignalDescription(const core::SignalType signalType) {
         case core::SignalType::GAS_CONCENTRATION_VOLUME_PERCENTAGE:
             return "Gas Conc.";
         case core::SignalType::H2_CONCENTRATION_VOLUME_PERCENTAGE:
-            return "H2 Conc.";\
+            return "H2 Conc.";
         case core::SignalType::PRESSURE_MBAR:
             return "P";
         default:

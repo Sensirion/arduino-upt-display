@@ -1,15 +1,13 @@
 #ifndef UPT_DISPLAY_H
 #define UPT_DISPLAY_H
 
+#include "IDisplay.h"
 #include "Sensirion_UPT_Core.h"
-#include "TFT_eSPI.h"
 #include <string>
 #include <utility>
 #include <vector>
 
 namespace sensirion::upt::display {
-
-enum Orientation { portrait = 0, landscape = 1 };
 
 /**
  * @brief A container for the measurements and sensor information
@@ -27,6 +25,13 @@ struct SensorDisplayValues {
  * @param orientation: defines the orientation of the screen
  */
 void init(Orientation orientation);
+
+/**
+ * @brief initializes the library with a custom display driver
+ * @param display: the display driver to use
+ * @param orientation: defines the orientation of the screen
+ */
+void init(IDisplay& display, Orientation orientation);
 
 /**
  * @brief Prints the given text centered on a blank background
@@ -65,7 +70,8 @@ void showSensorData(const SensorDisplayValues& sensorData);
  */
 void refreshSensorData(const SensorDisplayValues& sensorData);
 
-extern TFT_eSPI tft;
+// Deprecated: use IDisplay interface instead
+// extern TFT_eSPI tft;
 
 }  // namespace sensirion::upt::display
 

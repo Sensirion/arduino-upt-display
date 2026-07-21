@@ -1,8 +1,8 @@
 #include "UptDisplay.h"
 #include "SignalTypeExtended.h"
+#include "TftDisplay.h"
 #include <SensirionColors.h>
 #include <Tiling.h>
-#include <fonts/DefaultFont.h>
 #include <sstream>
 
 namespace sensirion::upt::display {
@@ -32,8 +32,8 @@ static std::string bufferValueAsString(const core::Measurement& measurement);
 /* Get color with which a signal should be displayed */
 static uint32_t colorOf(const core::Measurement& measurement);
 
-TFT_eSPI tft;
-static auto spr = TFT_eSprite(&tft);
+static TftDisplay _defaultDisplay;
+static IDisplay* _display = nullptr;
 
 static int16_t drawXPos;
 static int16_t drawYPos;
@@ -42,15 +42,13 @@ static int16_t drawYPos;
 static auto TAG = "VIZ";
 
 void init(const Orientation orientation) {
-    tft.init();
-    tft.setTextWrap(false);
-    tft.setRotation(orientation);
-    drawBackground();
-    tft.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
-                     UPT_DISPLAY_BACKGROUND_COLOR);
-    tft.setCursor(0, 0);
+    init(_defaultDisplay, orientation);
+}
 
-    spr.setColorDepth(16);
+void init(IDisplay& display, const Orientation orientation) {
+    _display = &display;
+    _display->init(orientation);
+    drawBackground();
 }
 
 void showTextScreen(const char* text) {
@@ -60,76 +58,71 @@ void showTextScreen(const char* text) {
     drawDevOverlay();
 #endif /* UPTDISPLAY_SHOW_GRID */
 
-    spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
-    spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
-                     UPT_DISPLAY_BACKGROUND_COLOR);
-
     const auto cursorX =
-        static_cast<int16_t>(tft.width() / 2 - spr.textWidth(text) / 2);
-    const auto cursorY =
-        static_cast<int16_t>(tft.height() / 2 - spr.fontHeight() / 2);
-    tft.setCursor(cursorX, cursorY);
+        static_cast<int16_t>(_display->getWidth() / 2 -
+                             _display->getTextWidth(text, Font::MEDIUM) / 2);
+    const auto cursorY = static_cast<int16_t>(
+        _display->getHeight() / 2 - _display->getFontHeight(Font::MEDIUM) / 2);
 
-    spr.printToSprite(text);
-    spr.unloadFont();
+    _display->drawText(text, cursorX, cursorY, Font::MEDIUM,
+                       UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                       UPT_DISPLAY_BACKGROUND_COLOR);
 }
 
 void showInformationScreen(
     const std::vector<std::pair<std::string, std::string>>& information,
     const byte* image, const int16_t imageHeight, const int16_t imageWidth) {
     constexpr char title[12] = "INFORMATION";
-    int16_t info_area_width_px;
+    uint16_t info_area_width_px;
 
     // Wipe screen
     drawBackground();
 
     // Define image location
-    if (tft.rotation == 0) {
+    if (_display->getRotation() == Orientation::portrait) {
         // Vertical
         // Image is below the information
         drawXPos = 10;
-        drawYPos = static_cast<int16_t>(tft.height() / 2);
-        info_area_width_px = tft.width();
+        drawYPos = static_cast<int16_t>(_display->getHeight() / 2);
+        info_area_width_px = _display->getWidth();
     } else {
         // Horizontal:
         // Image is next to the information
-        drawXPos = static_cast<int16_t>(tft.width() / 2);
+        drawXPos = static_cast<int16_t>(_display->getWidth() / 2);
         drawYPos = 10;
-        info_area_width_px = static_cast<int16_t>(tft.width() / 2);
+        info_area_width_px = static_cast<int16_t>(_display->getWidth() / 2);
     }
 
     // Print image
-    tft.drawXBitmap(drawXPos, drawYPos, image, imageHeight, imageWidth,
-                    UPT_DISPLAY_FONT_PRIMARY_COLOR);
+    _display->drawXBitmap(drawXPos, drawYPos, image, imageHeight, imageWidth,
+                          UPT_DISPLAY_FONT_PRIMARY_COLOR);
 
     const auto x_value = static_cast<int16_t>(info_area_width_px / 2 + 5);
     int16_t y_line = 10;
-    spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
-    spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
-                     UPT_DISPLAY_BACKGROUND_COLOR);
 
-    const int f_height = tft.fontHeight();
-    const int title_width_px = spr.textWidth(title);
+    const int f_height = _display->getFontHeight(Font::MEDIUM);
+    const int title_width_px = _display->getTextWidth(title, Font::MEDIUM);
 
     const auto xCursor =
         static_cast<int16_t>(info_area_width_px / 2 - title_width_px / 2);
-    tft.setCursor(xCursor, y_line);
-    spr.printToSprite(title);
+    _display->drawText(title, xCursor, y_line, Font::MEDIUM,
+                       UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                       UPT_DISPLAY_BACKGROUND_COLOR);
 
     y_line += 25;
 
     for (const auto& info : information) {
         constexpr int x_key = 10;
-        tft.setCursor(x_key, y_line);
-        spr.printToSprite(info.first.c_str());
+        _display->drawText(info.first.c_str(), x_key, y_line, Font::MEDIUM,
+                           UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                           UPT_DISPLAY_BACKGROUND_COLOR);
 
-        tft.setCursor(x_value, y_line);
-        spr.printToSprite(info.second.c_str());
+        _display->drawText(info.second.c_str(), x_value, y_line, Font::MEDIUM,
+                           UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                           UPT_DISPLAY_BACKGROUND_COLOR);
 
         y_line = static_cast<int16_t>(y_line + f_height + 6);
     }
-
-    spr.unloadFont();
 }
 
 void showSensorData(const SensorDisplayValues& data) {
@@ -142,7 +135,7 @@ void showSensorData(const SensorDisplayValues& data) {
         showTextScreen("Sensor has no configured signals.");
         return;
     }
-    if (tft.rotation == 0) {
+    if (_display->getRotation() == Orientation::portrait) {
         // Vertical screen has a top title
         drawVScreenTopTitle(data);
         drawVScreenLegend(data);
@@ -151,7 +144,7 @@ void showSensorData(const SensorDisplayValues& data) {
     }
 
     const SensorDisplayTile* tiles =
-        getNTiles(n_value, tft.width(), tft.height());
+        getNTiles(n_value, _display->getWidth(), _display->getHeight());
 
     if (tiles == nullptr)
         return;
@@ -176,14 +169,14 @@ void refreshSensorData(const SensorDisplayValues& data) {
         return;
     }
 
-    if (tft.rotation == 0) {
+    if (_display->getRotation() == Orientation::portrait) {
         drawVScreenLegend(data);
     } else {
         drawHScreenLegend(data);
     }
 
     const SensorDisplayTile* tiles =
-        getNTiles(n_value, tft.width(), tft.height());
+        getNTiles(n_value, _display->getWidth(), _display->getHeight());
 
     if (tiles == nullptr)
         return;
@@ -204,167 +197,152 @@ void drawDevOverlay() {
     constexpr int sep = 50;
 
     // Draw red grid lines
-    for (int x = sep; x < tft.width(); x += sep) {
-        tft.drawFastVLine(x, 0, tft.height(), TFT_RED);
+    for (uint16_t x = sep; x < _display->getWidth(); x += sep) {
+        _display->drawVLine(x, 0, _display->getHeight(),
+                                UPT_DISPLAY_RED_COLOR);
     }
-    for (int y = sep; y < tft.height(); y += sep) {
-        tft.drawFastHLine(0, y, tft.width(), TFT_RED);
+    for (uint16_t y = sep; y < _display->getHeight(); y += sep) {
+        _display->drawHLine(0, y, _display->getWidth(),
+                                UPT_DISPLAY_RED_COLOR);
     }
 
     // Draw coordinate info
-    for (int x = sep; x < tft.width(); x += sep) {
+    for (int x = sep; x < _display->getWidth(); x += sep) {
         char lbl[4];
         sprintf(lbl, "x%i", x);
-        const auto cursorX =
-            static_cast<int16_t>(x - tft.textWidth(lbl) / 2 + 1);
-        tft.setCursor(cursorX, 0);
-        tft.print(lbl);
+        const auto cursorX = static_cast<int16_t>(
+            x - _display->getTextWidth(lbl, Font::NORMAL) / 2 + 1);
+        _display->drawText(lbl, cursorX, 0, Font::NORMAL, UPT_DISPLAY_RED_COLOR,
+                           UPT_DISPLAY_BACKGROUND_COLOR);
     }
-    for (int16_t y = sep; y < tft.height(); y += sep) {
+    for (uint16_t y = sep; y < _display->getHeight(); y += sep) {
         char lbl[4];
         sprintf(lbl, "y%i", y);
-        const auto cursorY = static_cast<int16_t>(y - tft.fontHeight() / 2 + 1);
-        tft.setCursor(0, cursorY);
-        tft.print(lbl);
+        const auto cursorY = static_cast<int16_t>(
+            y - _display->getFontHeight(Font::NORMAL) / 2 + 1);
+        _display->drawText(lbl, 0, cursorY, Font::NORMAL, UPT_DISPLAY_RED_COLOR,
+                           UPT_DISPLAY_BACKGROUND_COLOR);
     }
 }
 
 void drawBackground() {
-    tft.fillScreen(UPT_DISPLAY_BACKGROUND_COLOR);
+    _display->fillScreen(UPT_DISPLAY_BACKGROUND_COLOR);
 }
 
-void drawVScreenTopTitle(const SensorDisplayValues& data) {
+void drawVScreenTopTitle(const SensorDisplayValues& sensorData) {
     // Print sensor name
-    spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
-    spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
-                     UPT_DISPLAY_BACKGROUND_COLOR);
     const auto cursorX = static_cast<int16_t>(
-        tft.width() / 2 - spr.textWidth(data.sensorName.c_str()) / 2);
-    tft.setCursor(cursorX, TILE_OFFSET - spr.fontHeight());
-    spr.printToSprite(data.sensorName.c_str());
-    spr.unloadFont();
+        _display->getWidth() / 2 -
+        _display->getTextWidth(sensorData.sensorName.c_str(), Font::MEDIUM) /
+            2);
+    _display->drawText(sensorData.sensorName.c_str(), cursorX,
+                       TILE_OFFSET - _display->getFontHeight(Font::MEDIUM),
+                       Font::MEDIUM, UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                       UPT_DISPLAY_BACKGROUND_COLOR);
 }
 
 void drawVScreenLegend(const SensorDisplayValues& sensorData) {
-
-    spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
-    spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
-                     UPT_DISPLAY_BACKGROUND_COLOR);
-
     int16_t cursorX = TILE_MARGIN;
-    const auto cursorY = static_cast<int16_t>(tft.height() - spr.fontHeight() -
-                                              SCREEN_FRAME_MARGIN);
+    const auto cursorY = static_cast<int16_t>(
+        _display->getHeight() - _display->getFontHeight(Font::MEDIUM) -
+        SCREEN_FRAME_MARGIN);
 
     // Print measurement time
-    tft.setCursor(cursorX, cursorY);
-    spr.printToSprite(sensorData.timeInfoStr.c_str());
+    _display->drawText(sensorData.timeInfoStr.c_str(), cursorX, cursorY,
+                       Font::MEDIUM, UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                       UPT_DISPLAY_BACKGROUND_COLOR);
 
     // Print sensor rank
     char rank[8];
     sprintf(rank, " %i/%i", sensorData.sensorRank,
             sensorData.numTrackedSensors);
-    cursorX =
-        static_cast<int16_t>(tft.width() - TILE_MARGIN - spr.textWidth(rank));
-    tft.setCursor(cursorX, cursorY);
-    spr.printToSprite(rank);
-
-    spr.unloadFont();
+    cursorX = static_cast<int16_t>(_display->getWidth() - TILE_MARGIN -
+                                   _display->getTextWidth(rank, Font::MEDIUM));
+    _display->drawText(rank, cursorX, cursorY, Font::MEDIUM,
+                       UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                       UPT_DISPLAY_BACKGROUND_COLOR);
 }
 
 void drawHScreenLegend(const SensorDisplayValues& sensorData) {
     // Print sensor name
-    spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
-    spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
-                     UPT_DISPLAY_BACKGROUND_COLOR);
     auto cursorX = static_cast<int16_t>(SCREEN_FRAME_MARGIN + 5);
-    auto cursorY = static_cast<int16_t>(tft.height() - spr.fontHeight() -
+    auto cursorY = static_cast<int16_t>(_display->getHeight() -
+                                        _display->getFontHeight(Font::MEDIUM) -
                                         SCREEN_FRAME_MARGIN);
 
-    tft.setCursor(cursorX, cursorY);
     char lbl[32];
     sprintf(lbl, "%s (%i/%i)", sensorData.sensorName.c_str(),
             sensorData.sensorRank, sensorData.numTrackedSensors);
-    spr.printToSprite(lbl);
-    const uint16_t sensorLabelWidth = spr.textWidth(lbl);
-    spr.unloadFont();
+
+    _display->drawText(lbl, cursorX, cursorY, Font::MEDIUM,
+                       UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                       UPT_DISPLAY_BACKGROUND_COLOR);
+
+    const uint16_t sensorLabelWidth = _display->getTextWidth(lbl, Font::MEDIUM);
 
     // Print measurement time
-    spr.loadFont(UPT_DISPLAY_FONT_SMALL);
     cursorX = static_cast<int16_t>(cursorX + sensorLabelWidth + 5);
-    cursorY = static_cast<int16_t>(tft.height() - spr.fontHeight() -
+    cursorY = static_cast<int16_t>(_display->getHeight() -
+                                   _display->getFontHeight(Font::SMALL) -
                                    SCREEN_FRAME_MARGIN);
-    tft.setCursor(cursorX, cursorY);
-
-    spr.printToSprite(sensorData.timeInfoStr.c_str());
-    spr.unloadFont();
+    _display->drawText(sensorData.timeInfoStr.c_str(), cursorX, cursorY,
+                       Font::SMALL, UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                       UPT_DISPLAY_BACKGROUND_COLOR);
 }
 
 void drawTile(const SensorDisplayTile& tile,
               const core::Measurement& measurement) {
     // Draw Tile
-    tft.fillRoundRect(tile.topLeft.x, tile.topLeft.y, tile.width, tile.height,
-                      ROUNDED_CORNER_RADIUS, UPT_DISPLAY_TILE_PRIMARY_COLOR);
-
-    spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
-                     UPT_DISPLAY_TILE_PRIMARY_COLOR);
+    _display->fillRoundRect(tile.topLeft.x, tile.topLeft.y, tile.width,
+                            tile.height, ROUNDED_CORNER_RADIUS,
+                            UPT_DISPLAY_TILE_PRIMARY_COLOR);
 
     // Print signal description
     const auto cursorX = static_cast<int16_t>(tile.topLeft.x + 10);
     const auto cursorY = static_cast<int16_t>(tile.topLeft.y + 5);
-    tft.setCursor(cursorX, cursorY);
+
     switch (tile.type) {
         case TileType::SMALL:
-            if (tft.rotation == 1) {
-                // Load small font when in landscape
-                spr.loadFont(UPT_DISPLAY_FONT_SMALL);
+            if (_display->getRotation() == Orientation::landscape) {
+                _display->drawText(
+                    shortSignalDescription(measurement.signalType).c_str(),
+                    cursorX, cursorY, Font::SMALL,
+                    UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                    UPT_DISPLAY_TILE_PRIMARY_COLOR);
             } else {
-                spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
+                _display->drawText(
+                    shortSignalDescription(measurement.signalType).c_str(),
+                    cursorX, cursorY, Font::MEDIUM,
+                    UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                    UPT_DISPLAY_TILE_PRIMARY_COLOR);
             }
-            spr.printToSprite(
-                shortSignalDescription(measurement.signalType).c_str());
             break;
         case TileType::NARROW:
         case TileType::MEDIUM:
-            spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
-            spr.printToSprite(
-                medSignalDescription(measurement.signalType).c_str());
+            _display->drawText(
+                medSignalDescription(measurement.signalType).c_str(), cursorX,
+                cursorY, Font::MEDIUM, UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                UPT_DISPLAY_TILE_PRIMARY_COLOR);
             break;
         case TileType::LARGE:
-            spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
-            spr.printToSprite(
-                longSignalDescription(measurement.signalType).c_str());
+            _display->drawText(
+                longSignalDescription(measurement.signalType).c_str(), cursorX,
+                cursorY, Font::MEDIUM, UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                UPT_DISPLAY_TILE_PRIMARY_COLOR);
             break;
         default:
-            tft.print("Error");
             break;
     }
-    spr.unloadFont();
 }
 
 void eraseTileValue(const SensorDisplayTile& tile) {
-    switch (tile.type) {
-        case TileType::SMALL:
-        case TileType::NARROW:
-            spr.loadFont(UPT_DISPLAY_FONT_LARGE);
-            break;
-        case TileType::MEDIUM:
-        case TileType::LARGE:
-            spr.loadFont(UPT_DISPLAY_FONT_XLARGE);
-            break;
-        default:
-            tft.print("Error");
-            break;
-    }
-
     const auto rectX = tile.topLeft.x;
-    const auto rectY = tile.topLeft.y + TILE_TITLE_OFFSET;
+    const auto rectY = static_cast<int16_t>(tile.topLeft.y + TILE_TITLE_OFFSET);
     const auto rectW = tile.width;
-    const auto rectH = tile.getBottomRight().y - rectY;
+    const auto rectH = static_cast<int16_t>(tile.getBottomRight().y - rectY);
 
-    tft.fillRoundRect(rectX, rectY, rectW, rectH, ROUNDED_CORNER_RADIUS,
-                      UPT_DISPLAY_TILE_PRIMARY_COLOR);
-
-    spr.unloadFont();
+    _display->fillRoundRect(rectX, rectY, rectW, rectH, ROUNDED_CORNER_RADIUS,
+                            UPT_DISPLAY_TILE_PRIMARY_COLOR);
 }
 
 void drawTileValue(const SensorDisplayTile& tile,
@@ -372,83 +350,79 @@ void drawTileValue(const SensorDisplayTile& tile,
     const auto val = bufferValueAsString(measurement);
     uint xShiftValue = 0;
     uint yShiftValue = 0;
+    Font valueFont;
 
     switch (tile.type) {
         case TileType::SMALL:
             // Shift value if horizontal tile is too small to avoid overflow
-            if (tft.rotation == 1) {
+            if (_display->getRotation() == Orientation::landscape) {
                 xShiftValue = 15;
                 yShiftValue = 2;
             }
         case TileType::NARROW:
-            spr.loadFont(UPT_DISPLAY_FONT_LARGE);
+            valueFont = Font::LARGE;
             break;
         case TileType::MEDIUM:
         case TileType::LARGE:
-            spr.loadFont(UPT_DISPLAY_FONT_XLARGE);
+            valueFont = Font::XLARGE;
             break;
         default:
-            tft.print("Error");
+            valueFont = Font::MEDIUM;
             break;
     }
 
-    const int valWidth = spr.textWidth(val.c_str());
-    spr.setTextColor(colorOf(measurement), UPT_DISPLAY_TILE_PRIMARY_COLOR);
+    const uint16_t valWidth = _display->getTextWidth(val.c_str(), valueFont);
+    const uint16_t valFontHeight = _display->getFontHeight(valueFont);
 
     // Offset height because of title
     const auto [cx, cy] = tile.getCenter();
     const auto cursorX = static_cast<int16_t>(cx - valWidth / 2 - xShiftValue);
     const auto cursorY = static_cast<int16_t>(cy + TILE_TITLE_OFFSET -
-                                              spr.fontHeight() + yShiftValue);
+                                              valFontHeight + yShiftValue);
 
-    tft.setCursor(cursorX, cursorY);
-    spr.printToSprite(val.c_str());
-    const int16_t valFontHeight = spr.fontHeight();
-    spr.unloadFont();
+    _display->drawText(val.c_str(), cursorX, cursorY, valueFont,
+                       colorOf(measurement), UPT_DISPLAY_TILE_PRIMARY_COLOR);
 
     const std::string unit = getGraphicSignalUnit(measurement.signalType);
+    Font unitFont;
 
     switch (tile.type) {
         case TileType::SMALL:
         case TileType::NARROW:
-            spr.loadFont(UPT_DISPLAY_FONT_SMALL);
+            unitFont = Font::SMALL;
             break;
         case TileType::MEDIUM:
         case TileType::LARGE:
-            spr.loadFont(UPT_DISPLAY_FONT_MEDIUM);
-            break;
         default:
-            tft.print("Error");
+            unitFont = Font::MEDIUM;
             break;
     }
 
-    // Display units
-    spr.setTextColor(UPT_DISPLAY_FONT_PRIMARY_COLOR,
-                     UPT_DISPLAY_TILE_PRIMARY_COLOR);
-
     int16_t unitXPos, unitYPos;
-    if (tft.rotation == 1) {
+    if (_display->getRotation() == Orientation::landscape) {
         unitXPos = static_cast<int16_t>(tile.getCenter().x +
                                         MEASUREMENT_VALUE_UNIT_SPACING +
                                         valWidth / 2 - xShiftValue);
         // Note: here we shift by 1/4 of font height because we need to ignore
         // the descendant part of the font, and we estimate it at 1/4th of the
         // height.
-        unitYPos = static_cast<int16_t>(cursorY + 3 * valFontHeight / 4 -
-                                        3 * spr.fontHeight() / 4);
+        unitYPos =
+            static_cast<int16_t>(cursorY + 3 * valFontHeight / 4 -
+                                 3 * _display->getFontHeight(unitFont) / 4);
     } else {
 
         const auto [brx, bry] = tile.getBottomRight();
-        unitXPos = static_cast<int16_t>(brx - ROUNDED_CORNER_RADIUS -
-                                        spr.textWidth(unit.c_str()));
-        unitYPos = static_cast<int16_t>(bry - ROUNDED_CORNER_RADIUS -
-                                        3 * spr.fontHeight() / 4);
+        unitXPos = static_cast<int16_t>(
+            brx - ROUNDED_CORNER_RADIUS -
+            _display->getTextWidth(unit.c_str(), unitFont));
+        unitYPos =
+            static_cast<int16_t>(bry - ROUNDED_CORNER_RADIUS -
+                                 3 * _display->getFontHeight(unitFont) / 4);
     }
 
-    tft.setCursor(unitXPos, unitYPos);
-
-    spr.printToSprite(unit.c_str());
-    spr.unloadFont();
+    _display->drawText(unit.c_str(), unitXPos, unitYPos, unitFont,
+                       UPT_DISPLAY_FONT_PRIMARY_COLOR,
+                       UPT_DISPLAY_TILE_PRIMARY_COLOR);
 }
 
 std::string bufferValueAsString(const core::Measurement& measurement) {

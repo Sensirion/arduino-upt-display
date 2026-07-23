@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+### Added
+- Introduced `IDisplay` interface to decouple display logic from hardware-specific libraries.
+- Implemented `TftDisplay` driver for standard `TFT_eSPI` based screens.
+- Added support for T-Display S3 Amoled with a new `AmoledDisplay` driver.
+- Added `basicUsageAmoled` example.
 
-- Refactored display layout and rendering for a more modular library.
-- Added configurable TFT_eSPI user setup selection through a build flag.
+### Changed
+- Refactored `UptDisplay` to use the `IDisplay` interface.
+- Improved rendering performance on buffered displays with `flush()` method.
 
 ## [0.4.1]
 
